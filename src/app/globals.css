@@ -1,21 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  /* Dark shades */
-  --color-dark-900: #111111;
-  --color-dark-700: #757575;
-  --color-dark-500: #aaaaaa;
-
-  /* Light shades */
-  --color-light-100: #ffffff;
-  --color-light-200: #f5f5f5;
-  --color-light-300: #e5e5e5;
-  --color-light-400: #cccccc;
-
-  /* Supporting colors */
-  --color-green: #007d48;
+  /* KBSK Trading Brand Colors */
+  
+  /* Primary Brand - Deep Forest Green */
+  --color-primary: #1E4620;
+  --color-primary-dark: #152f17;
+  --color-primary-light: #2a5f2e;
+  
+  /* Secondary Brand - Muted Gold/Mustard */
+  --color-secondary: #A8873E;
+  --color-secondary-dark: #8a6f32;
+  --color-secondary-light: #c4a052;
+  
+  /* Call-to-Action - Bright Orange */
+  --color-cta: #FF7A00;
+  --color-cta-dark: #e66d00;
+  --color-cta-light: #ff8f26;
+  
+  /* Background & Base Colors */
+  --color-white: #FFFFFF;
+  --color-gray-light: #F4F4F4;
+  --color-gray-medium: #E0E0E0;
+  --color-gray-dark: #CCCCCC;
+  
+  /* Text Colors */
+  --color-text-primary: #333333;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+  
+  /* Legacy color mappings for backward compatibility */
+  --color-dark-900: #333333;
+  --color-dark-700: #666666;
+  --color-dark-500: #999999;
+  
+  --color-light-100: #FFFFFF;
+  --color-light-200: #F4F4F4;
+  --color-light-300: #E0E0E0;
+  --color-light-400: #CCCCCC;
+  
+  --color-green: #1E4620;
   --color-red: #d33918;
-  --color-orange: #d37918;
+  --color-orange: #FF7A00;
+  
+  /* Utility Colors */
+  --color-success: #1E4620;
+  --color-warning: #FF7A00;
+  --color-error: #d33918;
+  --color-info: #0066cc;
 
   /* Font family */
   --font-jost: "Jost", sans-serif;

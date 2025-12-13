@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+  <rect width="600" height="600" fill="#f5f5f5"/>
+  <rect x="150" y="200" width="300" height="200" fill="#333" rx="10"/>
+  <rect x="170" y="220" width="260" height="100" fill="#555" rx="5"/>
+  <circle cx="200" cy="350" r="15" fill="#888"/>
+  <circle cx="400" cy="350" r="15" fill="#888"/>
+  <rect x="240" y="280" width="120" height="20" fill="#007d48" rx="3"/>
+  <text x="300" y="500" font-family="Arial" font-size="24" fill="#333" text-anchor="middle" font-weight="bold">Cordless Power Drill</text>
+</svg>

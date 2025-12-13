@@ -6,3 +6,4 @@ export { default as SocialProviders } from "./SocialProviders";
 export { default as ProductGallery } from "./ProductGallery";
 export { default as SizePicker } from "./SizePicker";
 export { default as CollapsibleSection } from "./CollapsibleSection";
+export { default as HeroSlider } from "./hero/HeroSlider";
