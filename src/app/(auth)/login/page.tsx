@@ -1,6 +1,11 @@
-import AuthForm from "@/components/AuthForm";
-import {signIn} from "@/lib/auth/actions";
+import { LoginForm } from "@/components/auth";
+import { Metadata } from "next";
 
-export default function Page() {
-  return <AuthForm mode="sign-in" onSubmit={signIn} />;
+export const metadata: Metadata = {
+  title: "Sign In | KBSK Trading",
+  description: "Sign in to your KBSK Trading account to continue shopping.",
+};
+
+export default function LoginPage() {
+  return <LoginForm />;
 }

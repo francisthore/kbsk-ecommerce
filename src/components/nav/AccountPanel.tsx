@@ -3,6 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { signOut } from "@/lib/auth/actions";
+import { User, Package, Heart, MapPin, Settings, LogOut, CheckCircle } from "lucide-react";
 
 export interface AccountPanelProps {
   isOpen: boolean;
@@ -19,6 +23,19 @@ export default function AccountPanel({
 }: AccountPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      onClose();
+      router.push("/");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out");
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -99,42 +116,55 @@ export default function AccountPanel({
                   </p>
                 </div>
 
-                <nav className="space-y-2">
+                <nav className="space-y-1">
                   <Link
                     href="/account"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
                     onClick={onClose}
                   >
+                    <User className="h-5 w-5 text-dark-700" />
                     Account Details
                   </Link>
                   <Link
                     href="/account/orders"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
                     onClick={onClose}
                   >
-                    My Orders
+                    <Package className="h-5 w-5 text-dark-700" />
+                    Order History
                   </Link>
                   <Link
                     href="/account/wishlist"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
                     onClick={onClose}
                   >
+                    <Heart className="h-5 w-5 text-dark-700" />
                     Wishlist
                   </Link>
                   <Link
                     href="/account/addresses"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
                     onClick={onClose}
                   >
-                    Saved Addresses
+                    <MapPin className="h-5 w-5 text-dark-700" />
+                    Addresses
+                  </Link>
+                  <Link
+                    href="/account/settings"
+                    className="flex items-center gap-3 rounded-lg px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
+                    onClick={onClose}
+                  >
+                    <Settings className="h-5 w-5 text-dark-700" />
+                    Settings
                   </Link>
                 </nav>
 
                 <div className="border-t border-light-300 pt-4">
                   <button
-                    className="w-full rounded-md border-2 border-[--color-primary] px-4 py-2 text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
-                    onClick={onClose}
+                    onClick={handleSignOut}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[--color-primary] px-4 py-3 text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
                   >
+                    <LogOut className="h-5 w-5" />
                     Sign Out
                   </button>
                 </div>
@@ -143,12 +173,11 @@ export default function AccountPanel({
               <div className="space-y-6">
                 <div>
                   <p className="mb-4 text-body text-dark-700">
-                    Sign in to access your account, track orders, and manage
-                    your preferences.
+                    Sign in to access your account and enjoy exclusive benefits.
                   </p>
                   <Link
-                    href="/auth/sign-in"
-                    className="block w-full rounded-md bg-[--color-cta] px-4 py-3 text-center text-body-medium font-medium text-white transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2"
+                    href="/login"
+                    className="block w-full rounded-lg bg-[--color-cta] px-4 py-3.5 text-center text-body-medium font-medium text-white transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2"
                     onClick={onClose}
                   >
                     Sign In
@@ -160,29 +189,37 @@ export default function AccountPanel({
                     New to KBSK Trading?
                   </p>
                   <Link
-                    href="/auth/sign-up"
-                    className="block w-full rounded-md border-2 border-[--color-primary] px-4 py-3 text-center text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
+                    href="/signup"
+                    className="block w-full rounded-lg border-2 border-[--color-primary] px-4 py-3 text-center text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
                     onClick={onClose}
                   >
                     Create Account
                   </Link>
                 </div>
 
-                <div className="space-y-2 border-t border-light-300 pt-4">
-                  <Link
-                    href="/track-order"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
-                    onClick={onClose}
-                  >
-                    Track Order
-                  </Link>
-                  <Link
-                    href="/help"
-                    className="block rounded-md px-4 py-3 text-body-medium text-dark-900 transition-colors hover:bg-light-200 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-inset"
-                    onClick={onClose}
-                  >
-                    Help & Support
-                  </Link>
+                {/* Benefits List */}
+                <div className="space-y-3 border-t border-light-300 pt-4">
+                  <p className="text-caption font-medium text-dark-900">
+                    Why create an account?
+                  </p>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2 text-caption text-dark-700">
+                      <CheckCircle className="h-4 w-4 flex-shrink-0 text-success" />
+                      Track your orders
+                    </li>
+                    <li className="flex items-start gap-2 text-caption text-dark-700">
+                      <CheckCircle className="h-4 w-4 flex-shrink-0 text-success" />
+                      Save cart across devices
+                    </li>
+                    <li className="flex items-start gap-2 text-caption text-dark-700">
+                      <CheckCircle className="h-4 w-4 flex-shrink-0 text-success" />
+                      Quick checkout
+                    </li>
+                    <li className="flex items-start gap-2 text-caption text-dark-700">
+                      <CheckCircle className="h-4 w-4 flex-shrink-0 text-success" />
+                      Exclusive deals
+                    </li>
+                  </ul>
                 </div>
               </div>
             )}

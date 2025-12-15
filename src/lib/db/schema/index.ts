@@ -4,7 +4,7 @@ export * from './enums';
 // Auth & User Management
 export * from './user';
 export * from './session';
-export * from './account';
+export { authAccounts } from './account';
 export * from './verification';
 export * from './guest';
 

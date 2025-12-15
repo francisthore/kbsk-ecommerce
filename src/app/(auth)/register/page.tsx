@@ -1,6 +1,6 @@
-import AuthForm from "@/components/AuthForm";
-import {signUp} from "@/lib/auth/actions";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <AuthForm mode="sign-up" onSubmit={signUp} />;
+// Redirect /register to /signup for consistency
+export default function RegisterPage() {
+  redirect("/signup");
 }
