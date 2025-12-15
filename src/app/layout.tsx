@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Jost } from "next/font/google";
 import "./globals.css";
+import { Navbar, Footer } from "@/components";
 
 const jost = Jost({
   variable: "--font-jost",
@@ -9,7 +10,8 @@ const jost = Jost({
 
 export const metadata: Metadata = {
   title: "KBSK Trading - Your Reliable Shop for Tools & PPE",
-  description: "High-quality power tools, hand tools, and personal protective equipment for professionals and DIY enthusiasts.",
+  description:
+    "High-quality power tools, hand tools, and personal protective equipment for professionals and DIY enthusiasts.",
 };
 
 export default function RootShell({
@@ -19,7 +21,11 @@ export default function RootShell({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.className} antialiased`}>{children}</body>
+      <body className={`${jost.className} antialiased`}>
+        <Navbar />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }

@@ -103,7 +103,7 @@ export default function Card({
   href,
   price,
   originalPrice,
-  currency = "USD",
+  currency = "ZAR",
   badge,
   rating,
   reviewCount,
@@ -112,7 +112,7 @@ export default function Card({
   className = "",
 }: CardProps) {
   const formatPrice = (amount: number): string => {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-ZA", {
       style: "currency",
       currency,
     }).format(amount);
@@ -225,7 +225,7 @@ export default function Card({
                 Add to Cart
               </button>
             )}
-            {href && (
+            {href && onAddToCart && (
               <Link
                 href={href}
                 className={`${

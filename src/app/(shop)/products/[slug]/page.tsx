@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Card, CollapsibleSection, ProductGallery, SizePicker } from "@/components";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import ColorSwatches from "@/components/ColorSwatches";
-import { getProduct, getProductReviews, getRecommendedProducts, type Review, type RecommendedProduct } from "@/lib/actions/product";
+import { getProduct, getProductReviews, getRecommendedProducts, type Review, type RecommendedProduct } from "@/lib/actions/products";
 
 type GalleryVariant = { color: string; images: string[] };
 
