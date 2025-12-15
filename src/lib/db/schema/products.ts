@@ -1,10 +1,12 @@
-import { pgTable, text, timestamp, uuid, boolean, jsonb, index } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, jsonb, index, PgColumn, PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { z } from 'zod';
 import { categories } from './categories';
 import { genders } from './filters/genders';
 import { brands } from './brands';
 import { productTypeEnum } from './enums';
+import { productImages } from './images'; 
+import { productVariants } from './variants';
 
 export const products = pgTable('products', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -36,7 +38,7 @@ export const products = pgTable('products', {
   slugIdx: index('products_slug_idx').on(t.slug),
 }));
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   category: one(categories, {
     fields: [products.categoryId],
     references: [categories.id],
@@ -49,6 +51,8 @@ export const productsRelations = relations(products, ({ one }) => ({
     fields: [products.brandId],
     references: [brands.id],
   }),
+  images: many(productImages),
+  variants: many(productVariants),
 }));
 
 export const insertProductSchema = z.object({
@@ -79,3 +83,5 @@ export const selectProductSchema = insertProductSchema.extend({
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type SelectProduct = z.infer<typeof selectProductSchema>;
 export type SelectProduct = z.infer<typeof selectProductSchema>;
+
+

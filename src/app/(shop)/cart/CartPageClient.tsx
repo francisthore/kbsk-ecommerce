@@ -22,10 +22,8 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
     setCart(initialCartData);
   }, [initialCartData, setCart]);
 
-  const { supplier: supplierItems } = groupItemsBySupplier(items);
-  const hasSupplierItems = supplierItems.length > 0;
-
-  if (items.length === 0) {
+  // ✅ Use initialCartData for the empty check to avoid sync timing issues
+  if (initialCartData.items.length === 0) {
     return (
       <div className="mx-auto w-[90%] py-8">
         <h1 className="mb-8 text-heading-3 font-bold text-[var(--color-text-primary)]">
@@ -36,8 +34,16 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
     );
   }
 
+  // Use store items for rendering (will be synced after first render)
+  const displayItems = items.length > 0 ? items : initialCartData.items;
+  const displayTotals = items.length > 0 ? totals : initialCartData.totals;
+  const displayFreeShipping = items.length > 0 ? freeShipping : initialCartData.freeShipping;
+
+  const { supplier: supplierItems } = groupItemsBySupplier(displayItems);
+  const hasSupplierItems = supplierItems.length > 0;
+
   return (
-    <div className="mx-auto w-[90%]  py-8">
+    <div className="mx-auto w-[90%] py-8">
       {/* Page Title */}
       <h1 className="mb-6 text-heading-3 font-bold text-[var(--color-text-primary)]">
         My Cart
@@ -45,7 +51,7 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
 
       {/* Free Shipping Banner */}
       <div className="mb-6 rounded-lg border border-[var(--color-gray-dark)] bg-[var(--color-gray-light)] px-6 py-4">
-        {freeShipping.eligible ? (
+        {displayFreeShipping.eligible ? (
           <div className="flex items-center gap-3 text-body font-medium text-[var(--color-success)]">
             <Truck className="h-5 w-5" />
             <span>You are eligible for free shipping!</span>
@@ -54,7 +60,7 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
           <div className="flex items-center gap-3 text-body font-medium text-[var(--color-text-secondary)]">
             <Truck className="h-5 w-5" />
             <span>
-              Add {formatPrice(freeShipping.amountRemaining)} more for free shipping!
+              Add {formatPrice(displayFreeShipping.amountRemaining)} more for free shipping!
             </span>
           </div>
         )}
@@ -74,7 +80,7 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
 
           {/* Cart Items List */}
           <div className="divide-y divide-[var(--color-gray-dark)] rounded-lg border border-[var(--color-gray-dark)] bg-white">
-            {items.map((item) => (
+            {displayItems.map((item) => (
               <div key={item.cartItemId} className="px-4 lg:px-6">
                 <CartItemRow item={item} />
               </div>
@@ -109,9 +115,9 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
         <div className="lg:col-span-1">
           <div className="sticky top-24">
             <CartSummary
-              subtotal={totals.subtotal}
-              savings={totals.savings}
-              total={totals.total}
+              subtotal={displayTotals.subtotal}
+              savings={displayTotals.savings}
+              total={displayTotals.total}
               showCheckoutButton
             />
 

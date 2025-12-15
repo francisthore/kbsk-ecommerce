@@ -7,7 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import MegaMenu, { MegaMenuColumn } from "./nav/MegaMenu";
 import AccountPanel from "./nav/AccountPanel";
 import { useCartStore } from "@/store/cart";
-import { getCart } from "@/lib/actions/cart";
+import { getCart, addToCart } from "@/lib/actions/cart";
 
 export interface NavbarProps {
   onSearch?: (query: string) => void;
@@ -194,7 +194,7 @@ export default function Navbar({
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const cartCount = useCartStore((state) => state.getItemCount());
+  const cartCount = useCartStore((state) => state.itemCount);
   const { openDrawer, setCart } = useCartStore();
   const [searchValue, setSearchValue] = useState("");
   const [activeMegaMenu, setActiveMegaMenu] = useState<MegaMenuType>(null);
@@ -204,9 +204,41 @@ export default function Navbar({
   useEffect(() => {
     setMounted(true);
     
-    // Fetch and sync cart data on mount
+    // Migrate old localStorage cart data and sync
     const syncCart = async () => {
+      // Check for old persisted cart data in localStorage
+      const oldCartData = localStorage.getItem('cart');
+      if (oldCartData) {
+        try {
+          const parsed = JSON.parse(oldCartData);
+          const oldItems = parsed?.state?.items;
+          
+          if (oldItems && Array.isArray(oldItems) && oldItems.length > 0) {
+            console.log('Migrating old cart data from localStorage...');
+            
+            // Add each old item to the new cart system
+            for (const item of oldItems) {
+              if (item.id && item.quantity) {
+                await addToCart(item.id, item.quantity);
+              }
+            }
+            
+            // Clear old localStorage data after migration
+            localStorage.removeItem('cart');
+            console.log('Migration complete. Old cart data cleared.');
+          }
+        } catch (error) {
+          console.error('Error migrating old cart data:', error);
+          // Clear corrupted data
+          localStorage.removeItem('cart');
+        }
+      }
+      
+      // Fetch and sync cart data from server
       const cartData = await getCart();
+      console.log('🛒 Navbar getCart result:', cartData);
+      console.log('🛒 Items:', cartData.items);
+      console.log('🛒 Item count:', cartData.itemCount);
       setCart(cartData);
     };
     syncCart();

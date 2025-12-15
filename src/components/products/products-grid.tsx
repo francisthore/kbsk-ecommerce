@@ -2,10 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { Card } from "@/components";
-import { addToCart } from "@/lib/actions/cart";
+import { addToCart, getCart } from "@/lib/actions/cart";
 import { toggleWishlist } from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner"; // Install: npm install sonner
+import { toast } from "sonner";
+import { useCartStore } from "@/store/cart";
 
 interface Product {
   id: string;
@@ -29,6 +30,7 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const { setCart } = useCartStore();
 
   const handleAddToCart = async (productId: string, defaultVariantId?: string) => {
     setLoadingProductId(productId);
@@ -39,9 +41,13 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
         // In real app, you'd have variant selector or use default variant
         const variantId = defaultVariantId || productId;
 
-        const result = await addToCart(variantId, 1, userId);
+        const result = await addToCart(variantId, 1);
 
         if (result.success) {
+          // Fetch updated cart and sync with store
+          const cartData = await getCart();
+          setCart(cartData);
+          
           toast.success(result.message || "Added to cart!");
         } else {
           toast.error(result.error || "Failed to add to cart");

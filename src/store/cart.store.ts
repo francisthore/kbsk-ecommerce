@@ -65,8 +65,6 @@ interface CartState {
   // Loading controls
   setLoading: (loading: boolean) => void;
   
-  // Computed
-  getItemCount: () => number;
 }
 
 const initialTotals: CartTotals = {
@@ -238,8 +236,4 @@ export const useCartStore = create<CartState>((set, get) => ({
   // Loading controls
   setLoading: (loading) => set({ isLoading: loading }),
   
-  // Get item count
-  getItemCount: () => {
-    return get().itemCount;
-  },
 }));

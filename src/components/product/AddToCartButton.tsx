@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ShoppingBag, Check } from "lucide-react";
-import { addToCart } from "@/lib/actions/cart";
+import { addToCart, getCart } from "@/lib/actions/cart";
 import { useCartStore } from "@/store/cart";
 
 interface AddToCartButtonProps {
@@ -29,34 +29,29 @@ export default function AddToCartButton({
   const [isPending, startTransition] = useTransition();
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const addToZustandCart = useCartStore((state) => state.addItem);
+  const { setCart, openDrawer } = useCartStore();
 
   const handleAddToCart = () => {
     setError(null);
     setShowSuccess(false);
 
-    // Optimistic update to Zustand store
-    addToZustandCart(
-      {
-        id: variantId,
-        name: `${productName} - ${variantSku}`,
-        price,
-        image: imageUrl,
-      },
-      quantity
-    );
-
-    // Show immediate success
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
-
-    // Sync to database in background
+    // Add to cart and sync state
     startTransition(async () => {
       const result = await addToCart(variantId, quantity);
 
-      if (!result.success) {
-        // Revert on failure (could implement proper rollback)
-        setError(result.error || "Failed to sync cart");
+      if (result.success) {
+        // Fetch updated cart data and sync with store
+        const cartData = await getCart();
+        setCart(cartData);
+        
+        // Show success
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+        
+        // Optionally open drawer to show the added item
+        //openDrawer();
+      } else {
+        setError(result.error || "Failed to add to cart");
         setTimeout(() => setError(null), 4000);
       }
     });

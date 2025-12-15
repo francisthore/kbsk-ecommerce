@@ -299,76 +299,94 @@ export async function clearCart() {
 export async function getCart() {
   try {
     const { cartId } = await getOrCreateCart();
+    console.log('🛒 getCart - cartId:', cartId);
 
-    // Fetch cart items with all necessary joins in a single optimized query
-    const items = await db
-      .select({
-        cartItemId: cartItems.id,
-        quantity: cartItems.quantity,
-        variantId: productVariants.id,
-        sku: productVariants.sku,
-        price: productVariants.price,
-        salePrice: productVariants.salePrice,
-        inStock: productVariants.inStock,
-        productId: products.id,
-        productName: products.name,
-        productSlug: products.slug,
-        brandName: brands.name,
-        colorId: colors.id,
-        colorName: colors.label,
-        colorHex: colors.hex,
-        sizeId: sizes.id,
-        sizeName: sizes.label,
-        imageUrl: productImages.url,
-      })
-      .from(cartItems)
-      .innerJoin(productVariants, eq(cartItems.productVariantId, productVariants.id))
-      .innerJoin(products, eq(productVariants.productId, products.id))
-      .leftJoin(brands, eq(products.brandId, brands.id))
-      .leftJoin(colors, eq(productVariants.colorId, colors.id))
-      .leftJoin(sizes, eq(productVariants.sizeId, sizes.id))
-      .leftJoin(
-        productImages,
-        and(
-          eq(productImages.productId, products.id),
-          eq(productImages.isPrimary, true)
-        )
-      )
-      .where(eq(cartItems.cartId, cartId));
+    // Fetch cart items using relations query instead of complex joins
+    const cartWithItems = await db.query.carts.findFirst({
+      where: eq(carts.id, cartId),
+      with: {
+        items: {
+          with: {
+            variant: {
+              with: {
+                product: {
+                  with: {
+                    brand: true,
+                    images: {
+                      where: eq(productImages.isPrimary, true),
+                      limit: 1,
+                    }
+                  }
+                },
+                color: true,
+                size: true,
+              }
+            }
+          }
+        }
+      }
+    });
 
+    console.log('🛒 getCart - cartWithItems:', cartWithItems);
+
+    if (!cartWithItems || !cartWithItems.items) {
+      console.log('🛒 getCart - no cart or items found');
+      return {
+        items: [],
+        totals: { subtotal: 0, savings: 0, total: 0 },
+        itemCount: 0,
+        freeShipping: { eligible: false, threshold: 1000, amountRemaining: 1000 },
+      };
+    }
+
+    const items = cartWithItems.items;
+    console.log('🛒 getCart - raw items from DB:', items.length);
+    
     // Transform to CartItemData format
     const cartItemsData: CartItemData[] = items.map((item) => ({
-      id: item.productId,
-      cartItemId: item.cartItemId,
-      productId: item.productId,
-      productName: item.productName,
-      brand: item.brandName,
-      variantId: item.variantId,
-      sku: item.sku,
-      price: item.price,
-      salePrice: item.salePrice,
+      id: item.variant.product.id,
+      cartItemId: item.id,
+      productId: item.variant.product.id,
+      productName: item.variant.product.name,
+      brand: item.variant.product.brand?.name || null,
+      variantId: item.variant.id,
+      sku: item.variant.sku,
+      price: item.variant.price,
+      salePrice: item.variant.salePrice,
       quantity: item.quantity,
-      inStock: item.inStock,
-      image: item.imageUrl,
-      colorName: item.colorName,
-      colorHex: item.colorHex,
-      sizeName: item.sizeName,
+      inStock: item.variant.inStock,
+      image: item.variant.product.images?.[0]?.url || null,
+      colorName: item.variant.color?.label || null,
+      colorHex: item.variant.color?.hex || null,
+      sizeName: item.variant.size?.label || null,
       isSupplierWarehouse: false, // TODO: Add when available in schema
     }));
 
+    console.log('🛒 getCart - transformed items:', cartItemsData.length);
+
     // Calculate totals
     const totals = calculateCartTotals(cartItemsData);
+    console.log('🛒 getCart - totals:', totals);
+    
     const itemCount = calculateItemCount(cartItemsData);
+    console.log('🛒 getCart - itemCount:', itemCount);
+    
     const freeShipping = isFreeShippingEligible(totals.total);
+    console.log('🛒 getCart - freeShipping:', freeShipping);
 
-    return {
+    const result = {
       items: cartItemsData,
       totals,
       itemCount,
       freeShipping,
     };
+    
+    console.log('🛒 getCart - final result:', result);
+    
+    return result;
   } catch (error) {
     console.error("Get cart error:", error);
+    console.error("Get cart error stack:", error instanceof Error ? error.stack : 'No stack trace');
     return {
       items: [],
       totals: { subtotal: 0, savings: 0, total: 0 },
