@@ -91,7 +91,7 @@ const Home = () => {
       />
 
       {/* Products Section */}
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto w-[90%] px-4 py-12 sm:px-6 lg:px-8">
         <section aria-labelledby="featured" className="mb-12">
           <div className="mb-8">
             <h1 className="text-heading-2 mb-2 text-dark-900">
@@ -101,7 +101,7 @@ const Home = () => {
               Quality equipment for professionals and enthusiasts
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {products.map((p) => (
               <Card
                 key={p.id}
