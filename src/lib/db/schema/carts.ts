@@ -3,10 +3,14 @@ import { relations } from 'drizzle-orm';
 import { z } from 'zod';
 import { users } from './user';
 import { guests } from './guest';
+import { accounts } from './accounts/accounts';
 import { productVariants } from './variants';
 
 export const carts = pgTable('carts', {
   id: uuid('id').primaryKey().defaultRandom(),
+  // B2B: link to account
+  accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'set null' }),
+  // B2C: keep user_id for individual users
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   guestId: uuid('guest_id').references(() => guests.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -21,6 +25,10 @@ export const cartItems = pgTable('cart_items', {
 });
 
 export const cartsRelations = relations(carts, ({ many, one }) => ({
+  account: one(accounts, {
+    fields: [carts.accountId],
+    references: [accounts.id],
+  }),
   user: one(users, {
     fields: [carts.userId],
     references: [users.id],
@@ -44,24 +52,28 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
 }));
 
 export const insertCartSchema = z.object({
+  accountId: z.string().uuid().optional().nullable(),
   userId: z.string().uuid().optional().nullable(),
   guestId: z.string().uuid().optional().nullable(),
   createdAt: z.date().optional(),
   updatedAt: z.date().optional(),
 });
+
 export const selectCartSchema = insertCartSchema.extend({
   id: z.string().uuid(),
 });
-export type InsertCart = z.infer<typeof insertCartSchema>;
-export type SelectCart = z.infer<typeof selectCartSchema>;
 
 export const insertCartItemSchema = z.object({
   cartId: z.string().uuid(),
   productVariantId: z.string().uuid(),
   quantity: z.number().int().min(1),
 });
+
 export const selectCartItemSchema = insertCartItemSchema.extend({
   id: z.string().uuid(),
 });
+
+export type InsertCart = z.infer<typeof insertCartSchema>;
+export type SelectCart = z.infer<typeof selectCartSchema>;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type SelectCartItem = z.infer<typeof selectCartItemSchema>;
