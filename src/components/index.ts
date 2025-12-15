@@ -7,3 +7,6 @@ export { default as ProductGallery } from "./ProductGallery";
 export { default as SizePicker } from "./SizePicker";
 export { default as CollapsibleSection } from "./CollapsibleSection";
 export { default as HeroSlider } from "./hero/HeroSlider";
+export { default as WelcomeCategoriesAndBrands } from "./welcome/WelcomeCategoriesAndBrands";
+export { default as CategoryGrid } from "./welcome/CategoryGrid";
+export { default as BrandsMarquee } from "./welcome/BrandsMarquee";

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" fill="none">
+  <rect width="600" height="400" fill="#fff3cd"/>
+  <rect x="180" y="100" width="100" height="140" rx="8" fill="#ffd700"/>
+  <rect x="320" y="100" width="100" height="140" rx="8" fill="#ffd700"/>
+  <rect x="200" y="120" width="60" height="100" rx="4" fill="#ffed4e"/>
+  <rect x="340" y="120" width="60" height="100" rx="4" fill="#ffed4e"/>
+  <text x="300" y="330" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#666">Safety Gloves</text>
+</svg>

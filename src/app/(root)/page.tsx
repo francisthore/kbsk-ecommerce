@@ -2,7 +2,10 @@
 
 import React from "react";
 import { Card, HeroSlider } from "@/components";
+import WelcomeCategoriesAndBrands from "@/components/welcome/WelcomeCategoriesAndBrands";
 import { heroSlides } from "@/lib/hero-slides";
+import { categories } from "@/lib/welcome-categories";
+import { brands } from "@/lib/welcome-brands";
 
 const products = [
   {
@@ -73,6 +76,17 @@ const Home = () => {
         autoPlay={true}
         intervalMs={6000}
         showDots={true}
+        className="mb-12"
+      />
+
+      {/* Welcome, Categories & Brands Section */}
+      <WelcomeCategoriesAndBrands
+        welcomeHeadline="Welcome to FIRST CLASS"
+        categories={categories}
+        brands={brands}
+        autoplay={true}
+        intervalMs={3000}
+        showArrows={true}
         className="mb-12"
       />
 
