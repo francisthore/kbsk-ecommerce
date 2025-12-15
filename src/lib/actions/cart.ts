@@ -186,7 +186,6 @@ export async function addToCart(
       .where(eq(carts.id, cartId));
 
     revalidatePath("/cart");
-    revalidatePath("/");
 
     return { success: true, message: "Added to cart" };
   } catch (error) {
@@ -427,5 +426,35 @@ export async function mergeGuestCartToUser(
   } catch (error) {
     console.error("Merge cart error:", error);
     return { success: false, error: "Failed to merge cart" };
+  }
+}
+
+// ============================================================================
+// BUY NOW (Add to cart and return checkout URL)
+// ============================================================================
+
+export async function buyNow(
+  productVariantId: string,
+  quantity: number = 1,
+  userId?: string,
+  accountId?: string
+) {
+  try {
+    // Add to cart first
+    const result = await addToCart(productVariantId, quantity, userId, accountId);
+
+    if (!result.success) {
+      return result;
+    }
+
+    // Return success with checkout redirect
+    return {
+      success: true,
+      message: "Proceeding to checkout",
+      redirectUrl: "/checkout",
+    };
+  } catch (error) {
+    console.error("Buy now error:", error);
+    return { success: false, error: "Failed to process buy now" };
   }
 }

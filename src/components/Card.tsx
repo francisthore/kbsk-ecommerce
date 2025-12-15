@@ -219,7 +219,7 @@ export default function Card({
                   compact
                     ? "w-full"
                     : "flex-1"
-                } rounded-md bg-[var(--color-cta)] px-4 py-2 text-body-medium font-medium text-light-100 transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2`}
+                } rounded-md bg-[var(--color-cta)] px-4 py-2 text-body-medium font-medium text-light-100 transition-colors hover:bg-[var(--color-cta-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--color-cta)] focus:ring-offset-2`}
                 aria-label={`Add ${title} to cart`}
               >
                 Add to Cart

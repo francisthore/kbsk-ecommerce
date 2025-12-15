@@ -438,15 +438,138 @@ function getEmptyFilterOptions() {
 // PRODUCT DETAIL PAGE
 // ============================================================================
 
+export async function getProductById(productId: string) {
+  try {
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.id, productId), isNull(products.deletedAt)),
+    });
+
+    if (!product) return null;
+
+    const [brand, category, gender, images, variants, standards, productCollectionsData, reviewStats] =
+      await Promise.all([
+        product.brandId
+          ? db.query.brands.findFirst({ where: eq(brands.id, product.brandId) })
+          : null,
+        product.categoryId
+          ? db.query.categories.findFirst({
+              where: eq(categories.id, product.categoryId),
+            })
+          : null,
+        product.genderId
+          ? db.query.genders.findFirst({ where: eq(genders.id, product.genderId) })
+          : null,
+        db.query.productImages.findMany({
+          where: eq(productImages.productId, product.id),
+          orderBy: asc(productImages.sortOrder),
+        }),
+        db.query.productVariants.findMany({
+          where: and(
+            eq(productVariants.productId, product.id),
+            isNull(productVariants.deletedAt)
+          ),
+        }).catch(err => {
+          console.error('Failed to fetch variants for product:', product.id, err);
+          return [];
+        }),
+        db.query.productStandards.findMany({
+          where: eq(productStandards.productId, product.id),
+        }),
+        db.query.productCollections.findMany({
+          where: eq(productCollections.productId, product.id),
+        }),
+        // Fetch review statistics
+        db
+          .select({
+            avgRating: avg(reviews.rating),
+            totalReviews: count(reviews.id),
+          })
+          .from(reviews)
+          .where(and(
+            eq(reviews.productId, product.id),
+            eq(reviews.status, 'approved')
+          ))
+          .then(result => result[0] || { avgRating: null, totalReviews: 0 }),
+      ]);
+
+    // Fetch variant attributes (colors, sizes, genders)
+    const colorIds = [...new Set(variants.map((v) => v.colorId).filter(Boolean))];
+    const sizeIds = [...new Set(variants.map((v) => v.sizeId).filter(Boolean))];
+    const genderIds = [...new Set(variants.map((v) => v.genderId).filter(Boolean))];
+
+    const [variantColors, variantSizes, variantGenders] = await Promise.all([
+      colorIds.length
+        ? db.query.colors.findMany({
+            where: inArray(colors.id, colorIds as string[]),
+          })
+        : [],
+      sizeIds.length
+        ? db.query.sizes.findMany({
+            where: inArray(sizes.id, sizeIds as string[]),
+          })
+        : [],
+      genderIds.length
+        ? db.query.genders.findMany({
+            where: inArray(genders.id, genderIds as string[]),
+          })
+        : [],
+    ]);
+
+    // Enrich variants with their attributes
+    const enrichedVariants = variants.map((v) => ({
+      ...v,
+      color: variantColors.find((c) => c.id === v.colorId) || null,
+      size: variantSizes.find((s) => s.id === v.sizeId) || null,
+      gender: variantGenders.find((g) => g.id === v.genderId) || null,
+    }));
+
+    // Calculate price range
+    const prices = enrichedVariants.map(v => Number(v.salePrice ?? v.price));
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+    // Check overall stock availability
+    const inStock = enrichedVariants.some(v => v.inStock > 0);
+    const totalStock = enrichedVariants.reduce((sum, v) => sum + v.inStock, 0);
+
+    return {
+      ...product,
+      brand,
+      category,
+      gender,
+      images,
+      variants: enrichedVariants,
+      standards,
+      collections: productCollectionsData,
+      rating: {
+        average: reviewStats.avgRating ? Number(reviewStats.avgRating) : 0,
+        count: Number(reviewStats.totalReviews),
+      },
+      pricing: {
+        minPrice,
+        maxPrice,
+      },
+      stock: {
+        inStock,
+        totalStock,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getProductById:', productId, error);
+    throw error;
+  }
+}
+
 export async function getProductBySlug(slug: string) {
-  const product = await db.query.products.findFirst({
-    where: and(eq(products.slug, slug), isNull(products.deletedAt)),
-  });
+  try {
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.slug, slug), isNull(products.deletedAt)),
+    });
 
-  if (!product) return null;
+    if (!product) return null;
 
-  const [brand, category, gender, images, variants, standards, productCollectionsData] =
-    await Promise.all([
+    const [brand, category, gender, images, variants, standards, productCollectionsData, reviewStats] =
+      await Promise.all([
       product.brandId
         ? db.query.brands.findFirst({ where: eq(brands.id, product.brandId) })
         : null,
@@ -467,6 +590,9 @@ export async function getProductBySlug(slug: string) {
           eq(productVariants.productId, product.id),
           isNull(productVariants.deletedAt)
         ),
+      }).catch(err => {
+        console.error('Failed to fetch variants for product:', product.id, err);
+        return [];
       }),
       db.query.productStandards.findMany({
         where: eq(productStandards.productId, product.id),
@@ -474,6 +600,18 @@ export async function getProductBySlug(slug: string) {
       db.query.productCollections.findMany({
         where: eq(productCollections.productId, product.id),
       }),
+      // Fetch review statistics
+      db
+        .select({
+          avgRating: avg(reviews.rating),
+          totalReviews: count(reviews.id),
+        })
+        .from(reviews)
+        .where(and(
+          eq(reviews.productId, product.id),
+          eq(reviews.status, 'approved')
+        ))
+        .then(result => result[0] || { avgRating: null, totalReviews: 0 }),
     ]);
 
   // Fetch variant attributes (colors, sizes, genders)
@@ -507,6 +645,15 @@ export async function getProductBySlug(slug: string) {
     gender: variantGenders.find((g) => g.id === v.genderId) || null,
   }));
 
+  // Calculate price range
+  const prices = enrichedVariants.map(v => Number(v.salePrice ?? v.price));
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+  // Check overall stock availability
+  const inStock = enrichedVariants.some(v => v.inStock > 0);
+  const totalStock = enrichedVariants.reduce((sum, v) => sum + v.inStock, 0);
+
   return {
     ...product,
     brand,
@@ -516,7 +663,23 @@ export async function getProductBySlug(slug: string) {
     variants: enrichedVariants,
     standards,
     collections: productCollectionsData,
+    rating: {
+      average: reviewStats.avgRating ? Number(reviewStats.avgRating) : 0,
+      count: Number(reviewStats.totalReviews),
+    },
+    pricing: {
+      minPrice,
+      maxPrice,
+    },
+    stock: {
+      inStock,
+      totalStock,
+    },
   };
+  } catch (error) {
+    console.error('Error in getProductBySlug:', slug, error);
+    throw error;
+  }
 }
 
 // ============================================================================

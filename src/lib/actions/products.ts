@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { wishlists, products, reviews, users } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { getProductBySlug, getRelatedProducts } from "@/lib/db/queries/products";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { getProductBySlug, getProductById, getRelatedProducts } from "@/lib/db/queries/products";
 
 // ============================================================================
 // TYPES
@@ -16,7 +16,22 @@ export interface Review {
   author: string;
   title: string | null;
   content: string | null;
+  pros: string | null;
+  cons: string | null;
   createdAt: Date;
+  isVerified?: boolean;
+}
+
+export interface ReviewStats {
+  average: number;
+  total: number;
+  distribution: {
+    5: number;
+    4: number;
+    3: number;
+    2: number;
+    1: number;
+  };
 }
 
 export interface RecommendedProduct {
@@ -183,7 +198,14 @@ export async function toggleWishlist(productId: string, userId: string) {
 
 export async function getProduct(slug: string) {
   try {
-    const productData = await getProductBySlug(slug);
+    // Try to get by slug first
+    let productData = await getProductBySlug(slug);
+    
+    // If slug fails and the string looks like a UUID, try by ID
+    if (!productData && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug)) {
+      console.log('Slug lookup failed, trying by ID:', slug);
+      productData = await getProductById(slug);
+    }
     
     if (!productData) {
       return null;
@@ -204,24 +226,59 @@ export async function getProduct(slug: string) {
 // GET PRODUCT REVIEWS
 // ============================================================================
 
-export async function getProductReviews(productId: string): Promise<Review[]> {
+export async function getProductReviews(
+  productId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<{ reviews: Review[]; stats: ReviewStats; total: number; pages: number }> {
   try {
-    const productReviews = await db
-      .select({
-        id: reviews.id,
-        rating: reviews.rating,
-        title: reviews.title,
-        comment: reviews.comment,
-        createdAt: reviews.createdAt,
-        userId: reviews.userId,
-      })
-      .from(reviews)
-      .where(and(
-        eq(reviews.productId, productId),
-        eq(reviews.status, "approved")
-      ))
-      .orderBy(desc(reviews.createdAt))
-      .limit(50);
+    const offset = (page - 1) * limit;
+
+    // Fetch reviews with pagination
+    const [productReviews, totalCount, ratingDistribution] = await Promise.all([
+      db
+        .select({
+          id: reviews.id,
+          rating: reviews.rating,
+          title: reviews.title,
+          comment: reviews.comment,
+          pros: reviews.pros,
+          cons: reviews.cons,
+          createdAt: reviews.createdAt,
+          userId: reviews.userId,
+        })
+        .from(reviews)
+        .where(and(
+          eq(reviews.productId, productId),
+          eq(reviews.status, "approved")
+        ))
+        .orderBy(desc(reviews.createdAt))
+        .limit(limit)
+        .offset(offset),
+      
+      // Get total count
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(reviews)
+        .where(and(
+          eq(reviews.productId, productId),
+          eq(reviews.status, "approved")
+        ))
+        .then(result => Number(result[0]?.count || 0)),
+
+      // Get rating distribution
+      db
+        .select({
+          rating: reviews.rating,
+          count: sql<number>`count(*)`,
+        })
+        .from(reviews)
+        .where(and(
+          eq(reviews.productId, productId),
+          eq(reviews.status, "approved")
+        ))
+        .groupBy(reviews.rating),
+    ]);
 
     // Fetch user details for each review
     const enrichedReviews = await Promise.all(
@@ -236,15 +293,50 @@ export async function getProductReviews(productId: string): Promise<Review[]> {
           author: user?.name || "Anonymous",
           title: review.title,
           content: review.comment,
+          pros: review.pros,
+          cons: review.cons,
           createdAt: review.createdAt,
+          isVerified: false, // TODO: Implement verified purchase check
         };
       })
     );
 
-    return enrichedReviews;
+    // Calculate distribution
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    ratingDistribution.forEach(({ rating, count }) => {
+      if (rating >= 1 && rating <= 5) {
+        distribution[rating as keyof typeof distribution] = Number(count);
+      }
+    });
+
+    // Calculate average
+    const totalRatings = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+    const weightedSum = Object.entries(distribution).reduce(
+      (sum, [rating, count]) => sum + Number(rating) * count,
+      0
+    );
+    const average = totalRatings > 0 ? weightedSum / totalRatings : 0;
+
+    const stats: ReviewStats = {
+      average,
+      total: totalCount,
+      distribution,
+    };
+
+    return {
+      reviews: enrichedReviews,
+      stats,
+      total: totalCount,
+      pages: Math.ceil(totalCount / limit),
+    };
   } catch (error) {
     console.error("Get product reviews error:", error);
-    return [];
+    return {
+      reviews: [],
+      stats: { average: 0, total: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } },
+      total: 0,
+      pages: 0,
+    };
   }
 }
 

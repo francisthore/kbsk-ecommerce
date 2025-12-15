@@ -5,9 +5,9 @@ import Link from "next/link";
 import { useState, useRef } from "react";
 import MegaMenu, { MegaMenuColumn } from "./nav/MegaMenu";
 import AccountPanel from "./nav/AccountPanel";
+import { useCartStore } from "@/store/cart";
 
 export interface NavbarProps {
-  cartCount?: number;
   onSearch?: (query: string) => void;
   accountOpenDefault?: boolean;
   isSignedIn?: boolean;
@@ -184,12 +184,12 @@ const MEGA_MENUS: Record<
 };
 
 export default function Navbar({
-  cartCount = 0,
   onSearch,
   accountOpenDefault = false,
   isSignedIn = false,
   userName,
 }: NavbarProps) {
+  const cartCount = useCartStore((state) => state.getItemCount());
   const [searchValue, setSearchValue] = useState("");
   const [activeMegaMenu, setActiveMegaMenu] = useState<MegaMenuType>(null);
   const [accountOpen, setAccountOpen] = useState(accountOpenDefault);
