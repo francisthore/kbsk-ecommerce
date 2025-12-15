@@ -19,7 +19,7 @@ export default function EmptyCart() {
       </p>
       
       <Link
-        href="/"
+        href="/products"
         className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-cta)] px-6 py-3 text-body-medium text-white transition-colors hover:bg-[var(--color-cta-dark)] focus:outline-none focus:ring-2 focus:ring-[var(--color-cta)] focus:ring-offset-2"
       >
         Continue Shopping
