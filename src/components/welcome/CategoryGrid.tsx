@@ -16,7 +16,7 @@ export default function CategoryGrid({ categories, className = "" }: CategoryGri
 
   return (
     <section className={`w-full bg-transparent ${className}`} aria-label="Shop by Category">
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto w-[90%]">
         {/* Grid container */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {categories.map((category) => {

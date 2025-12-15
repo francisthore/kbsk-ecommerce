@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     other: {
       // JSON-LD structured data for products
       "product:price:amount": price?.toFixed(2) || "",
-      "product:price:currency": "USD",
+      "product:price:currency": "ZAR",
     },
   };
 }
@@ -113,7 +113,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
     offers: {
       "@type": "Offer",
       url: `${process.env.NEXT_PUBLIC_APP_URL || ""}/products/${product.slug}`,
-      priceCurrency: "USD",
+      priceCurrency: "ZAR",
       price: price?.toFixed(2) || "0.00",
       availability:
         product.stock.inStock
@@ -162,7 +162,7 @@ export default async function ProductDetailPage({ params, searchParams }: PagePr
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <main className="mx-auto w-[90%]">
       {/* Structured Data */}
       <script
         type="application/ld+json"

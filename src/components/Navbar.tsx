@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import MegaMenu, { MegaMenuColumn } from "./nav/MegaMenu";
 import AccountPanel from "./nav/AccountPanel";
 import { useCartStore } from "@/store/cart";
+import { getCart } from "@/lib/actions/cart";
 
 export interface NavbarProps {
   onSearch?: (query: string) => void;
@@ -189,11 +191,26 @@ export default function Navbar({
   isSignedIn = false,
   userName,
 }: NavbarProps) {
+  const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
   const cartCount = useCartStore((state) => state.getItemCount());
+  const { openDrawer, setCart } = useCartStore();
   const [searchValue, setSearchValue] = useState("");
   const [activeMegaMenu, setActiveMegaMenu] = useState<MegaMenuType>(null);
   const [accountOpen, setAccountOpen] = useState(accountOpenDefault);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    // Fetch and sync cart data on mount
+    const syncCart = async () => {
+      const cartData = await getCart();
+      setCart(cartData);
+    };
+    syncCart();
+  }, [setCart]);
 
   const megaMenuTimeout = useRef<NodeJS.Timeout>();
 
@@ -201,6 +218,19 @@ export default function Navbar({
     e.preventDefault();
     if (onSearch && searchValue.trim()) {
       onSearch(searchValue);
+    }
+  };
+
+  const handleCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // If on cart page, refresh and scroll to top
+    if (pathname === "/cart") {
+      router.refresh();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Otherwise, open drawer
+      openDrawer();
     }
   };
 
@@ -348,9 +378,10 @@ export default function Navbar({
               </button>
 
               {/* Cart */}
-              <Link
-                href="/cart"
+              <button
+                onClick={handleCartClick}
                 className="relative flex items-center gap-2 text-white transition-opacity hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-white rounded"
+                aria-label={pathname === "/cart" ? "Refresh cart" : "Open cart"}
               >
                 <div className="relative">
                   <svg
@@ -367,17 +398,17 @@ export default function Navbar({
                     <circle cx="20" cy="21" r="1" />
                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                   </svg>
-                  {cartCount > 0 && (
+                  {mounted && cartCount > 0 && (
                     <span
-                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-secondary)] text-footnote font-bold text-white"
+                      className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-cta)] text-footnote font-bold text-white"
                       aria-live="polite"
                     >
-                      {cartCount > 9 ? "9+" : cartCount}
+                      {cartCount > 99 ? "99+" : cartCount}
                     </span>
                   )}
                 </div>
                 <span className="hidden text-body-medium lg:inline">Cart</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>

@@ -90,7 +90,7 @@ export default function Footer({
   };
 
   return (
-    <footer className="bg-dark-900 text-light-100">
+    <footer className="bg-dark-900 text-light-100 mt-12">
       <div className="mx-auto w-[90%] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">

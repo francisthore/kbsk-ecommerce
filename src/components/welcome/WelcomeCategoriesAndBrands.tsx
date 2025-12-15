@@ -45,7 +45,7 @@ export default function WelcomeCategoriesAndBrands({
         className="relative w-full bg-[var(--color-primary)] py-12 sm:py-16"
         aria-label="Welcome"
       >
-        <div className="mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="mx-auto w-[90%]">
           <h1 className="text-center text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
             {before && <span>{before} </span>}
             {emphasis && (
@@ -59,7 +59,7 @@ export default function WelcomeCategoriesAndBrands({
         </div>
 
         {/* Elevated category grid - positioned to overlap the green band */}
-        <div className="relative z-10 mx-auto max-w-7xl px-4 lg:px-8">
+        <div className="relative z-10 mx-auto w-[90%]">
           <div className="mt-8 sm:mt-12">
             <CategoryGrid categories={categories} />
           </div>

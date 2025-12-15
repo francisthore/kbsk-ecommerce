@@ -151,7 +151,7 @@ export default function BrandsMarquee({
         aria-live="polite"
         aria-atomic="true"
       />
-      <div className="mx-auto max-w-7xl px-4 lg:px-8">
+      <div className="mx-auto w-[90%]">
         <h2 className="mb-6 text-center text-2xl font-bold text-dark-900 sm:mb-8 sm:text-3xl">
           Popular Brands
         </h2>

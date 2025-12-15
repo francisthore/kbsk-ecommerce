@@ -162,7 +162,7 @@ export function ProductsFilters({
               />
             </div>
             <p className="text-caption text-dark-600">
-              ${availableFilters.priceRange.min} - $
+              R{availableFilters.priceRange.min} - R
               {availableFilters.priceRange.max}
             </p>
           </div>

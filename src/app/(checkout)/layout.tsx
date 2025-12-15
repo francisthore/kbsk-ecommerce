@@ -6,7 +6,7 @@ export default function CheckoutLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Minimal checkout layout - no header/footer distractions */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="mx-auto w-[90%] py-8">
         <div className="max-w-4xl mx-auto">
           {children}
         </div>

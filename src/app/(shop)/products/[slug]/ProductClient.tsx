@@ -265,11 +265,11 @@ export default function ProductClient({
 
           {/* Price */}
           <div className="flex items-center gap-3">
-            <p className="text-lead text-dark-900">${currentPrice.toFixed(2)}</p>
+            <p className="text-lead text-dark-900">R{currentPrice.toFixed(2)}</p>
             {comparePrice && (
               <>
                 <span className="text-body text-dark-700 line-through">
-                  ${comparePrice.toFixed(2)}
+                  R{comparePrice.toFixed(2)}
                 </span>
                 {discount && (
                   <span className="rounded-full border border-light-300 px-2 py-1 text-caption text-green-600">
