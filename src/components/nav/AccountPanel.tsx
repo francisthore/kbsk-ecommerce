@@ -162,7 +162,7 @@ export default function AccountPanel({
                 <div className="border-t border-light-300 pt-4">
                   <button
                     onClick={handleSignOut}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[--color-primary] px-4 py-3 text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[--color-primary] px-4 py-3 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
                   >
                     <LogOut className="h-5 w-5" />
                     Sign Out
@@ -177,7 +177,7 @@ export default function AccountPanel({
                   </p>
                   <Link
                     href="/login"
-                    className="block w-full rounded-lg bg-[--color-cta] px-4 py-3.5 text-center text-body-medium font-medium text-white transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2"
+                    className="block w-full rounded-lg bg-[var(--color-cta)] px-4 py-3.5 text-center text-body-medium font-medium text-white transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2"
                     onClick={onClose}
                   >
                     Sign In
@@ -190,7 +190,7 @@ export default function AccountPanel({
                   </p>
                   <Link
                     href="/signup"
-                    className="block w-full rounded-lg border-2 border-[--color-primary] px-4 py-3 text-center text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
+                    className="block w-full rounded-lg border-2 border-[var(--color-primary)] px-4 py-3 text-center text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                     onClick={onClose}
                   >
                     Create Account

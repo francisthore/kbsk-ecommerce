@@ -496,7 +496,7 @@ export default function Navbar({
               onMouseLeave={handleMegaMenuClose}
             >
               <button
-                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
                 onClick={() =>
                   setActiveMegaMenu(
                     activeMegaMenu === "power-tools" ? null : "power-tools"
@@ -531,7 +531,7 @@ export default function Navbar({
               onMouseLeave={handleMegaMenuClose}
             >
               <button
-                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
                 onClick={() =>
                   setActiveMegaMenu(
                     activeMegaMenu === "hand-tools" ? null : "hand-tools"
@@ -566,7 +566,7 @@ export default function Navbar({
               onMouseLeave={handleMegaMenuClose}
             >
               <button
-                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
                 onClick={() =>
                   setActiveMegaMenu(
                     activeMegaMenu === "accessories" ? null : "accessories"
@@ -601,7 +601,7 @@ export default function Navbar({
               onMouseLeave={handleMegaMenuClose}
             >
               <button
-                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+                className="flex items-center gap-1 whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
                 onClick={() =>
                   setActiveMegaMenu(activeMegaMenu === "ppe" ? null : "ppe")
                 }
@@ -630,19 +630,19 @@ export default function Navbar({
             {/* Regular Links */}
             <Link
               href="/brands"
-              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
             >
               Brands
             </Link>
             <Link
               href="/about"
-              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
             >
               About Us
             </Link>
             <Link
               href="/contact"
-              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+              className="whitespace-nowrap px-4 py-4 text-body-medium text-dark-900 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
             >
               Contact Us
             </Link>

@@ -175,14 +175,14 @@ export default function LoginForm() {
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 rounded border-light-300 text-[--color-primary] focus:ring-2 focus:ring-[--color-primary]/20"
+                  className="h-4 w-4 rounded border-light-300 text-[var(--color-primary)] focus:ring-2 focus:ring-[--color-primary]/20"
                   disabled={isLoading}
                 />
                 <span className="text-caption text-dark-700">Remember me</span>
               </label>
               <Link
                 href="/forgot-password"
-                className="text-caption text-[--color-primary] hover:underline"
+                className="text-caption text-[var(--color-primary)] hover:underline"
               >
                 Forgot password?
               </Link>
@@ -192,7 +192,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -210,7 +210,7 @@ export default function LoginForm() {
             Don&apos;t have an account?{" "}
             <Link
               href="/signup"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Create an account
             </Link>
@@ -224,25 +224,25 @@ export default function LoginForm() {
           </h3>
           <ul className="space-y-2 text-caption text-dark-700">
             <li className="flex items-center gap-2">
-              <svg className="h-5 w-5 flex-shrink-0 text-[--color-primary]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 flex-shrink-0 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Track your orders in real-time
             </li>
             <li className="flex items-center gap-2">
-              <svg className="h-5 w-5 flex-shrink-0 text-[--color-primary]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 flex-shrink-0 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Save your cart across devices
             </li>
             <li className="flex items-center gap-2">
-              <svg className="h-5 w-5 flex-shrink-0 text-[--color-primary]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 flex-shrink-0 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Quick and easy checkout
             </li>
             <li className="flex items-center gap-2">
-              <svg className="h-5 w-5 flex-shrink-0 text-[--color-primary]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 flex-shrink-0 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
               Access exclusive deals and offers

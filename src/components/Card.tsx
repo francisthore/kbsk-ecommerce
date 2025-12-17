@@ -30,9 +30,9 @@ export interface CardProps {
 
 const getBadgeStyles = (badge: BadgeType): string => {
   const badgeMap: Record<string, string> = {
-    New: "bg-[--color-primary] text-light-100",
+    New: "bg-[var(--color-primary)] text-light-100",
     Bestseller: "bg-[--color-secondary] text-light-100",
-    Sale: "bg-[--color-cta] text-light-100",
+    Sale: "bg-[var(--color-cta)] text-light-100",
     PPE: "bg-dark-900 text-light-100",
     Limited: "bg-dark-700 text-light-100",
   };
@@ -234,7 +234,7 @@ export default function Card({
                     : onAddToCart
                       ? "flex-1"
                       : "w-full"
-                } flex items-center justify-center rounded-md border-2 border-[--color-primary] bg-light-100 px-4 py-2 text-body-medium font-medium text-[--color-primary] transition-colors hover:bg-[--color-primary] hover:text-light-100 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2`}
+                } flex items-center justify-center rounded-md border-2 border-[--color-primary] bg-light-100 px-4 py-2 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-light-100 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2`}
                 aria-label={`View details for ${title}`}
               >
                 Details

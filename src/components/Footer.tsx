@@ -231,7 +231,7 @@ export default function Footer({
                 />
                 <button
                   type="submit"
-                  className="rounded-md bg-[--color-cta] px-6 py-2 text-body-medium font-medium text-light-100 transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2 focus:ring-offset-dark-900"
+                  className="rounded-md bg-[var(--color-cta)] px-6 py-2 text-body-medium font-medium text-light-100 transition-colors hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta] focus:ring-offset-2 focus:ring-offset-dark-900"
                 >
                   {subscribed ? "Subscribed!" : "Subscribe"}
                 </button>

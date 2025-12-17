@@ -63,7 +63,7 @@ export default function MegaMenu({
                   <li key={linkIdx}>
                     <Link
                       href={link.href}
-                      className="block text-body text-dark-700 transition-colors hover:text-[--color-primary] focus:outline-none focus:text-[--color-primary]"
+                      className="block text-body text-dark-700 transition-colors hover:text-[var(--color-primary)] focus:outline-none focus:text-[var(--color-primary)]"
                       role="menuitem"
                       onClick={onClose}
                     >

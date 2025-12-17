@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, Mail, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { resendVerificationEmail } from "@/lib/auth/actions";
 
 interface EmailVerificationNoticeProps {
   email: string;
@@ -23,20 +22,48 @@ export default function EmailVerificationNotice({
     setIsResending(true);
 
     try {
-      await resendVerificationEmail(email);
-      toast.success("Verification email sent!");
-      
-      // Start 60-second cooldown
-      setCooldown(60);
-      const interval = setInterval(() => {
-        setCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // Use Better Auth's native resend verification API endpoint
+      const response = await fetch("/api/auth/send-verification-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email,
+          callbackURL: "/verify-email"
+        }),
+      });
+
+      // Try to parse JSON response if available
+      let data = null;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          // Failed to parse JSON, that's ok
+        }
+      }
+
+      if (!response.ok) {
+        const errorMsg = data?.error?.message || data?.message || "Failed to resend email. Please try again.";
+        console.error("Resend verification error:", { status: response.status, error: data });
+        toast.error(errorMsg);
+      } else {
+        toast.success("Verification email sent!");
+        
+        // Start 60-second cooldown
+        setCooldown(60);
+        const interval = setInterval(() => {
+          setCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      }
     } catch (error) {
       console.error("Resend verification error:", error);
       toast.error("Failed to resend email. Please try again.");
@@ -62,7 +89,7 @@ export default function EmailVerificationNotice({
         {/* Card */}
         <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
           <div className="mb-6 flex justify-center">
-            <div className="rounded-full bg-[--color-cta]/10 p-4">
+            <div className="rounded-full bg-[var(--color-cta)]/10 p-4">
               <Mail className="h-12 w-12 text-[--color-cta]" />
             </div>
           </div>
@@ -83,7 +110,7 @@ export default function EmailVerificationNotice({
             <button
               onClick={handleResend}
               disabled={isResending || cooldown > 0}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[--color-primary] bg-white px-6 py-3 text-body-medium text-[--color-primary] transition-all hover:bg-[--color-primary] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[--color-primary] bg-white px-6 py-3 text-body-medium text-[var(--color-primary)] transition-all hover:bg-[var(--color-primary)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isResending ? (
                 <>
@@ -111,7 +138,7 @@ export default function EmailVerificationNotice({
             <ul className="space-y-1 text-caption text-dark-700">
               <li>• Check your spam or junk folder</li>
               <li>• Make sure {email} is correct</li>
-              <li>• Add no-reply@kbsktrading.com to your contacts</li>
+              <li>• Add no-reply@kbsktrading.net to your contacts</li>
             </ul>
           </div>
 
@@ -119,7 +146,7 @@ export default function EmailVerificationNotice({
             <span>Wrong email?</span>
             <Link
               href="/signup"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Sign up again
             </Link>
@@ -132,7 +159,7 @@ export default function EmailVerificationNotice({
             Need help?{" "}
             <a
               href="mailto:support@kbsktrading.com"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Contact support
             </a>

@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { sendPasswordResetEmail } from "@/lib/auth/actions";
 import { validateEmail } from "@/lib/utils/validation";
 
 export default function ForgotPasswordForm() {
@@ -31,9 +30,34 @@ export default function ForgotPasswordForm() {
     setIsLoading(true);
 
     try {
-      await sendPasswordResetEmail(email);
-      setEmailSent(true);
-      toast.success("Password reset instructions sent!");
+      // Use Better Auth's native password reset API endpoint
+      const response = await fetch("/api/auth/forget-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      // Try to parse JSON response if available
+      let data = null;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          // Failed to parse JSON, that's ok
+        }
+      }
+
+      if (!response.ok) {
+        const errorMsg = data?.error?.message || data?.message || `Request failed with status ${response.status}`;
+        console.error("Password reset error:", { status: response.status, error: data });
+        toast.error(errorMsg);
+      } else {
+        setEmailSent(true);
+        toast.success("Password reset instructions sent!");
+      }
     } catch (error) {
       console.error("Password reset error:", error);
       toast.error("An error occurred. Please try again.");
@@ -80,7 +104,7 @@ export default function ForgotPasswordForm() {
                   setEmailSent(false);
                   setEmail("");
                 }}
-                className="text-[--color-primary] hover:underline"
+                className="text-[var(--color-primary)] hover:underline"
               >
                 try another email address
               </button>
@@ -88,7 +112,7 @@ export default function ForgotPasswordForm() {
 
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 text-caption text-[--color-primary] hover:underline"
+              className="inline-flex items-center gap-2 text-caption text-[var(--color-primary)] hover:underline"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to sign in
@@ -159,7 +183,7 @@ export default function ForgotPasswordForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -179,7 +203,7 @@ export default function ForgotPasswordForm() {
             Remember your password?{" "}
             <Link
               href="/login"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Sign in
             </Link>

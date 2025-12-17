@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
-import { verifyEmail } from "@/lib/auth/actions";
+import { toast } from "sonner";
 import { EmailVerificationNotice } from "@/components/auth";
 
 export default function VerifyEmailPage() {
@@ -29,15 +29,37 @@ export default function VerifyEmailPage() {
       }
 
       try {
-        const result = await verifyEmail(token);
-        if (result.ok) {
-          setStatus("success");
-          // Redirect to login after 3 seconds
-          setTimeout(() => {
-            router.push("/login");
-          }, 3000);
-        } else {
+        // Use Better Auth's native email verification API endpoint
+        const response = await fetch("/api/auth/verify-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        // Try to parse JSON response if available
+        let data = null;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            data = await response.json();
+          } catch {
+            // Failed to parse JSON, that's ok
+          }
+        }
+
+        if (!response.ok) {
+          console.error("Email verification error:", { status: response.status, error: data });
+          toast.error("Verification failed. Please try again or request a new link.");
           setStatus("error");
+        } else {
+          setStatus("success");
+          toast.success("Email verified successfully! Redirecting...");
+          // Redirect to home after 2 seconds to show success state
+          setTimeout(() => {
+            router.push("/");
+          }, 2000);
         }
       } catch (error) {
         console.error("Email verification error:", error);
@@ -57,7 +79,7 @@ export default function VerifyEmailPage() {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-light-200">
         <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-[--color-primary]" />
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-[var(--color-primary)]" />
           <p className="mt-4 text-body text-dark-700">Verifying your email...</p>
         </div>
       </div>
@@ -89,14 +111,14 @@ export default function VerifyEmailPage() {
               Email Verified!
             </h1>
             <p className="mb-8 text-body text-dark-700">
-              Your email has been successfully verified. Redirecting you to sign in...
+              Your email has been successfully verified. You are now signed in!
             </p>
 
             <Link
-              href="/login"
-              className="inline-block w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
+              href="/"
+              className="inline-block w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
             >
-              Continue to Sign In
+              Continue Shopping
             </Link>
           </div>
         </div>
@@ -133,14 +155,14 @@ export default function VerifyEmailPage() {
 
           <Link
             href="/signup"
-            className="inline-block w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
+            className="inline-block w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
           >
             Back to Sign Up
           </Link>
 
           <Link
             href="/login"
-            className="mt-4 inline-block text-caption text-[--color-primary] hover:underline"
+            className="mt-4 inline-block text-caption text-[var(--color-primary)] hover:underline"
           >
             Back to sign in
           </Link>

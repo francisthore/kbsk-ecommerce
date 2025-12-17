@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema/index";
 import { v4 as uuidv4 } from "uuid";
 import { nextCookies } from "better-auth/next-js";
+import { sendBetterAuthVerificationEmail, sendBetterAuthWelcomeEmail } from "./email-config";
+import "@/lib/env-validation"; // Validate environment on auth module load
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -15,14 +17,28 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
+  emailVerification: {
+    sendOnSignUp: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      console.log('🚨 Better Auth sendVerificationEmail hook triggered!', { 
+        email: user.email, 
+        url 
+      });
+      await sendBetterAuthVerificationEmail(user, url);
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendVerificationEmail: async ({ user, token }) => {
-      // TODO: Implement email sending service (e.g., Resend, SendGrid)
-      console.log(`Verification email for ${user.email}: ${token}`);
-      // In production, send actual email here
+    sendResetPassword: async ({ user, url }) => {
+      console.log('🚨 Better Auth sendResetPassword hook triggered!', { email: user.email });
+      const { sendBetterAuthPasswordResetEmail } = await import("./email-config");
+      await sendBetterAuthPasswordResetEmail(user, url);
     },
+  },
+  // Hook to send welcome email after successful verification
+  onAfterVerifyEmail: async ({ user }) => {
+    await sendBetterAuthWelcomeEmail(user);
   },
   socialProviders: {
     google: {

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Loader2, Check, X } from "lucide-react";
 import { toast } from "sonner";
-import { resetPassword, verifyResetToken } from "@/lib/auth/actions";
 import {
   validatePassword,
   passwordsMatch,
@@ -23,8 +22,6 @@ export default function ResetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(true);
-  const [tokenValid, setTokenValid] = useState(false);
   const [errors, setErrors] = useState<{
     password?: string;
     confirmPassword?: string;
@@ -32,28 +29,6 @@ export default function ResetPasswordForm() {
 
   const passwordStrength = getPasswordStrength(password);
   const passwordValidation = validatePassword(password);
-
-  useEffect(() => {
-    const verifyToken = async () => {
-      if (!token) {
-        setTokenValid(false);
-        setIsVerifying(false);
-        return;
-      }
-
-      try {
-        const result = await verifyResetToken(token);
-        setTokenValid(result.valid);
-      } catch (error) {
-        console.error("Token verification error:", error);
-        setTokenValid(false);
-      } finally {
-        setIsVerifying(false);
-      }
-    };
-
-    verifyToken();
-  }, [token]);
 
   const getStrengthColor = (strength: number) => {
     if (strength === 0) return "bg-gray-300";
@@ -93,18 +68,46 @@ export default function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm() || !token) return;
+    if (!validateForm() || !token) {
+      if (!token) {
+        toast.error("Reset link is invalid");
+      }
+      return;
+    }
 
     setIsLoading(true);
 
     try {
-      const result = await resetPassword(token, password);
+      // Use Better Auth's native password reset API endpoint
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          newPassword: password,
+          token 
+        }),
+      });
 
-      if (result.ok) {
+      // Try to parse JSON response if available
+      let data = null;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+        } catch {
+          // Failed to parse JSON, that's ok
+        }
+      }
+
+      if (!response.ok) {
+        const errorMsg = data?.error?.message || data?.message || "Failed to reset password. Link may be invalid or expired.";
+        console.error("Password reset error:", { status: response.status, error: data });
+        toast.error(errorMsg);
+      } else {
         toast.success("Password reset successfully!");
         router.push("/login");
-      } else {
-        toast.error("Failed to reset password. Token may be invalid or expired.");
       }
     } catch (error) {
       console.error("Password reset error:", error);
@@ -114,18 +117,7 @@ export default function ResetPasswordForm() {
     }
   };
 
-  if (isVerifying) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-light-200">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-[--color-primary]" />
-          <p className="mt-4 text-body text-dark-700">Verifying reset link...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!token || !tokenValid) {
+  if (!token) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-light-200 px-4 py-12">
         <div className="w-full max-w-[480px] space-y-8">
@@ -155,14 +147,14 @@ export default function ResetPasswordForm() {
 
             <Link
               href="/forgot-password"
-              className="inline-block w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
+              className="inline-block w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark]"
             >
               Request New Link
             </Link>
 
             <Link
               href="/login"
-              className="mt-4 inline-block text-caption text-[--color-primary] hover:underline"
+              className="mt-4 inline-block text-caption text-[var(--color-primary)] hover:underline"
             >
               Back to sign in
             </Link>
@@ -383,7 +375,7 @@ export default function ResetPasswordForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -400,7 +392,7 @@ export default function ResetPasswordForm() {
           <p className="mt-6 text-center text-caption text-dark-700">
             <Link
               href="/login"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Back to sign in
             </Link>

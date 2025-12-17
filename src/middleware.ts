@@ -10,5 +10,6 @@ export const config = {
     "/login",
     "/signup",
     "/register",
+    // Note: /verify-email is intentionally excluded to allow users to see success message after verification
   ],
 };

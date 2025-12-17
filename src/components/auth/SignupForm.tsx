@@ -96,8 +96,14 @@ export default function SignupForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) return;
+    console.log('🔵 Form submitted:', { email: formData.email, name: formData.name });
 
+    if (!validateForm()) {
+      console.log('❌ Form validation failed');
+      return;
+    }
+
+    console.log('✅ Form validation passed');
     setIsLoading(true);
 
     try {
@@ -106,7 +112,9 @@ export default function SignupForm() {
       formDataObj.append("email", formData.email);
       formDataObj.append("password", formData.password);
 
+      console.log('🔵 Calling authSignUp...');
       const result = await authSignUp(formDataObj);
+      console.log('🔵 authSignUp result:', result);
 
       if (result?.ok) {
         toast.success("Account created! Please check your email to verify your account.");
@@ -366,18 +374,18 @@ export default function SignupForm() {
                     setAcceptedTerms(e.target.checked);
                     setErrors((prev) => ({ ...prev, terms: undefined }));
                   }}
-                  className={`mt-0.5 h-4 w-4 rounded border-light-300 text-[--color-primary] focus:ring-2 focus:ring-[--color-primary]/20 ${
+                  className={`mt-0.5 h-4 w-4 rounded border-light-300 text-[var(--color-primary)] focus:ring-2 focus:ring-[--color-primary]/20 ${
                     errors.terms ? "border-error" : ""
                   }`}
                   disabled={isLoading}
                 />
                 <span className="text-caption text-dark-700">
                   I agree to the{" "}
-                  <Link href="/terms" className="text-[--color-primary] hover:underline">
+                  <Link href="/terms" className="text-[var(--color-primary)] hover:underline">
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="text-[--color-primary] hover:underline">
+                  <Link href="/privacy" className="text-[var(--color-primary)] hover:underline">
                     Privacy Policy
                   </Link>
                 </span>
@@ -391,7 +399,7 @@ export default function SignupForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-[--color-cta] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-[var(--color-cta)] px-6 py-3.5 text-body-medium text-white transition-all hover:bg-[--color-cta-dark] focus:outline-none focus:ring-2 focus:ring-[--color-cta]/20 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -409,7 +417,7 @@ export default function SignupForm() {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="font-medium text-[--color-primary] hover:underline"
+              className="font-medium text-[var(--color-primary)] hover:underline"
             >
               Sign in
             </Link>
