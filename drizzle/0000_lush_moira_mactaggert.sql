@@ -13,6 +13,7 @@ CREATE TYPE "public"."quote_source" AS ENUM('self_service', 'sales_agent', 'impo
 CREATE TYPE "public"."quote_status" AS ENUM('draft', 'submitted', 'in_review', 'quoted', 'accepted', 'rejected', 'expired', 'converted');--> statement-breakpoint
 CREATE TYPE "public"."review_status" AS ENUM('pending', 'approved', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."user_account_role" AS ENUM('owner', 'admin', 'buyer', 'viewer');--> statement-breakpoint
+CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TYPE "public"."discount_type" AS ENUM('percentage', 'fixed');--> statement-breakpoint
 CREATE TABLE "auth_accounts" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -36,6 +37,7 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"role" "user_role" DEFAULT 'user' NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
@@ -217,6 +219,39 @@ CREATE TABLE "product_variants" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"deleted_at" timestamp,
 	CONSTRAINT "product_variants_sku_unique" UNIQUE("sku")
+);
+--> statement-breakpoint
+CREATE TABLE "product_variant_options" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"product_id" uuid NOT NULL,
+	"group_id" uuid NOT NULL,
+	"required" boolean DEFAULT true NOT NULL,
+	"display_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "variant_option_assignments" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"variant_id" uuid NOT NULL,
+	"option_value_id" uuid NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "variant_option_groups" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"name" text NOT NULL,
+	"display_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "variant_option_values" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"group_id" uuid NOT NULL,
+	"value" text NOT NULL,
+	"display_order" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "product_standards" (
@@ -444,6 +479,11 @@ ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_produ
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_color_id_colors_id_fk" FOREIGN KEY ("color_id") REFERENCES "public"."colors"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_size_id_sizes_id_fk" FOREIGN KEY ("size_id") REFERENCES "public"."sizes"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_gender_id_genders_id_fk" FOREIGN KEY ("gender_id") REFERENCES "public"."genders"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_variant_options" ADD CONSTRAINT "product_variant_options_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_variant_options" ADD CONSTRAINT "product_variant_options_group_id_variant_option_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."variant_option_groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variant_option_assignments" ADD CONSTRAINT "variant_option_assignments_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variant_option_assignments" ADD CONSTRAINT "variant_option_assignments_option_value_id_variant_option_values_id_fk" FOREIGN KEY ("option_value_id") REFERENCES "public"."variant_option_values"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "variant_option_values" ADD CONSTRAINT "variant_option_values_group_id_variant_option_groups_id_fk" FOREIGN KEY ("group_id") REFERENCES "public"."variant_option_groups"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_standards" ADD CONSTRAINT "product_standards_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_bundle_items" ADD CONSTRAINT "product_bundle_items_parent_product_id_products_id_fk" FOREIGN KEY ("parent_product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_bundle_items" ADD CONSTRAINT "product_bundle_items_child_product_id_products_id_fk" FOREIGN KEY ("child_product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

@@ -21,6 +21,7 @@ export * from './collections';
 export * from './products';
 export * from './images';
 export * from './variants';
+export * from './variantOptions';
 export * from './catalog';
 
 // Filters

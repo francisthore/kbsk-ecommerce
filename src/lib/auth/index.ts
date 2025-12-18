@@ -18,6 +18,17 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
+  // Expose user role in session for middleware access
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        defaultValue: "user",
+        required: true,
+        input: false, // Don't accept from user input
+      },
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,

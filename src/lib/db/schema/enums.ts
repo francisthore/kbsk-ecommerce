@@ -1,5 +1,8 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
 
+// User-related enums
+export const userRoleEnum = pgEnum('user_role', ['user', 'admin']);
+
 // Account-related enums
 export const accountTypeEnum = pgEnum('account_type', ['individual', 'business']);
 export const accountStatusEnum = pgEnum('account_status', ['active', 'suspended']);
