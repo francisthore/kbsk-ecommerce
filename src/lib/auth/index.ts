@@ -5,9 +5,10 @@ import * as schema from "@/lib/db/schema/index";
 import { v4 as uuidv4 } from "uuid";
 import { nextCookies } from "better-auth/next-js";
 import { sendBetterAuthVerificationEmail, sendBetterAuthWelcomeEmail } from "./email-config";
-import "@/lib/env-validation"; // Validate environment on auth module load
+import "@/lib/env-validation";
 
 export const auth = betterAuth({
+  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -17,6 +18,21 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+    resetPasswordEnabled: true,
+    // Add password reset configuration here
+    async sendResetPassword({ user, url }) {
+      console.log('🚨 Password reset requested for:', user.email);
+      console.log('🔹 Reset URL:', url);
+      
+      const { sendBetterAuthPasswordResetEmail } = await import("./email-config");
+      await sendBetterAuthPasswordResetEmail(user, url);
+      
+      console.log('✅ Password reset email sent successfully');
+    },
+  },
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
@@ -26,19 +42,10 @@ export const auth = betterAuth({
       });
       await sendBetterAuthVerificationEmail(user, url);
     },
-  },
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }) => {
-      console.log('🚨 Better Auth sendResetPassword hook triggered!', { email: user.email });
-      const { sendBetterAuthPasswordResetEmail } = await import("./email-config");
-      await sendBetterAuthPasswordResetEmail(user, url);
+    async onSuccess({ user }) {
+      console.log('🚨 Email verification successful, sending welcome email to:', user.email);
+      await sendBetterAuthWelcomeEmail(user);
     },
-  },
-  // Hook to send welcome email after successful verification
-  onAfterVerifyEmail: async ({ user }) => {
-    await sendBetterAuthWelcomeEmail(user);
   },
   socialProviders: {
     google: {
@@ -50,7 +57,7 @@ export const auth = betterAuth({
   sessions: {
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7,
     },
   },
   cookies: {
@@ -59,9 +66,9 @@ export const auth = betterAuth({
       options: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax", // Changed from 'strict' to 'lax' for OAuth compatibility
+        sameSite: "lax",
         path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7,
       },
     },
   },
@@ -74,9 +81,12 @@ export const auth = betterAuth({
   },
   rateLimit: {
     enabled: true,
-    window: 60, // 1 minute
-    max: 10, // 10 requests per window
+    window: 60,
+    max: 10,
   },
-  trustedOrigins: process.env.TRUSTED_ORIGINS?.split(",") || [],
+  trustedOrigins: [
+    "http://localhost:3000",
+    ...(process.env.TRUSTED_ORIGINS?.split(",").filter(Boolean) || []),
+  ],
   plugins: [nextCookies()],
 });

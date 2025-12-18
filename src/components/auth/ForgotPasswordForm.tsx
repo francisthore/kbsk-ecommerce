@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { validateEmail } from "@/lib/utils/validation";
+import { forgetPassword } from "@/lib/auth/client";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -30,36 +31,28 @@ export default function ForgotPasswordForm() {
     setIsLoading(true);
 
     try {
-      // Use Better Auth's native password reset API endpoint
-      const response = await fetch("/api/auth/forget-password", {
+      const response = await fetch("/api/auth/request-password-reset", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          redirectTo: "/reset-password",
+        }),
       });
 
-      // Try to parse JSON response if available
-      let data = null;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          data = await response.json();
-        } catch {
-          // Failed to parse JSON, that's ok
-        }
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = data?.error?.message || data?.message || `Request failed with status ${response.status}`;
-        console.error("Password reset error:", { status: response.status, error: data });
-        toast.error(errorMsg);
-      } else {
-        setEmailSent(true);
-        toast.success("Password reset instructions sent!");
+        toast.error(data.message || "Failed to send reset email");
+        return;
       }
-    } catch (error) {
-      console.error("Password reset error:", error);
+
+      setEmailSent(true);
+      toast.success("Password reset instructions sent!");
+    } catch (err) {
+      console.error("Unexpected error:", err);
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

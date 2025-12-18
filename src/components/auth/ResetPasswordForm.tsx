@@ -11,6 +11,7 @@ import {
   passwordsMatch,
   getPasswordStrength,
 } from "@/lib/utils/validation";
+import { resetPassword } from "@/lib/auth/client";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -78,39 +79,28 @@ export default function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      // Use Better Auth's native password reset API endpoint
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           newPassword: password,
-          token 
+          token: token || "",
         }),
       });
 
-      // Try to parse JSON response if available
-      let data = null;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        try {
-          data = await response.json();
-        } catch {
-          // Failed to parse JSON, that's ok
-        }
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorMsg = data?.error?.message || data?.message || "Failed to reset password. Link may be invalid or expired.";
-        console.error("Password reset error:", { status: response.status, error: data });
-        toast.error(errorMsg);
-      } else {
-        toast.success("Password reset successfully!");
-        router.push("/login");
+        toast.error(data.message || "Failed to reset password");
+        return;
       }
-    } catch (error) {
-      console.error("Password reset error:", error);
+
+      toast.success("Password reset successfully!");
+      router.push("/login");
+    } catch (err) {
+      console.error("Unexpected error:", err);
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);

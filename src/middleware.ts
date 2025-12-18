@@ -1,15 +1,16 @@
-import { middleware as authMiddleware } from "./lib/auth/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default authMiddleware;
+export function middleware(request: NextRequest) {
+  // Allow all API auth routes to pass through
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
-    "/account/:path*",
-    "/dashboard/:path*",
-    "/admin/:path*",
-    "/login",
-    "/signup",
-    "/register",
-    // Note: /verify-email is intentionally excluded to allow users to see success message after verification
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };
