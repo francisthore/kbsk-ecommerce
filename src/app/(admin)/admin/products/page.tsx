@@ -7,7 +7,11 @@ async function getProducts() {
   const products = await db.query.products.findMany({
     with: {
       brand: true,
-      category: true,
+      categories: {
+        with: {
+          category: true,
+        },
+      },
       variants: {
         limit: 1,
         orderBy: (variants, { asc }) => [asc(variants.createdAt)],

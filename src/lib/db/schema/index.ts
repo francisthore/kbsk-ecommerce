@@ -19,6 +19,7 @@ export * from './brands';
 export * from './categories';
 export * from './collections';
 export * from './products';
+export * from './productToCategories';
 export * from './images';
 export * from './variants';
 export * from './variantOptions';
@@ -42,4 +43,7 @@ export * from './commerce';
 
 // Quotes Domain (RFQ)
 export * from './quotes';
+
+// Shop Configuration
+export * from './shopSettings';
 

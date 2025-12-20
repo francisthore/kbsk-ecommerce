@@ -1,6 +1,7 @@
 import { pgTable, text, uuid, foreignKey } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { z } from 'zod';
+import { productToCategories } from './productToCategories';
 
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -24,6 +25,8 @@ export const categoriesRelations = relations(categories, ({ many, one }) => ({
     references: [categories.id],
   }),
   children: many(categories),
+  // Many-to-many relation with products
+  products: many(productToCategories),
 }));
 
 export const insertCategorySchema = z.object({

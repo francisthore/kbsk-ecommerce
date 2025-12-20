@@ -51,6 +51,7 @@ export const productVariantFormSchema = z.object({
   ),
   inStock: z.number().int().nonnegative().default(0),
   backorderable: z.boolean().default(false),
+  vatIncluded: z.boolean().default(true), // Whether the price includes VAT
   weight: z.string().optional(),
   dimensions: z.object({
     length: z.number().nonnegative(),
@@ -105,8 +106,8 @@ export const createProductFormSchema = z.object({
   ),
   description: z.string().optional(),
   
-  // Categorization
-  categoryId: z.string().uuid('Invalid category').optional(),
+  // Categorization - MULTI-CATEGORY SUPPORT
+  categoryIds: z.array(z.string().uuid('Invalid category')).min(1, 'Select at least one category'),
   brandId: z.string().uuid('Invalid brand').optional(),
   productType: z.enum(['tool', 'accessory', 'consumable', 'ppe']).default('tool'),
   genderId: z.string().uuid('Invalid gender').optional(),

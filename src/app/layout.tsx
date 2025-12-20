@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Jost } from "next/font/google";
 import "./globals.css";
-import { Navbar, Footer } from "@/components";
-import CartDrawer from "@/components/cart/CartDrawer";
 import { Toaster } from "sonner";
+import RootLayoutClient from "./RootLayoutClient";
 
 const jost = Jost({
   variable: "--font-jost",
@@ -24,10 +23,7 @@ export default function RootShell({
   return (
     <html lang="en">
       <body className={`${jost.className} antialiased flex min-h-screen flex-col`}>
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <CartDrawer />
+        <RootLayoutClient>{children}</RootLayoutClient>
         <Toaster position="top-right" richColors />
       </body>
     </html>

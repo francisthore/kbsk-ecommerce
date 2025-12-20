@@ -12,6 +12,7 @@ import {
   productCollections,
   collections,
   reviews,
+  productToCategories,
 } from '@/lib/db/schema';
 import {
   eq,
@@ -81,7 +82,13 @@ export async function getProducts(
   const conditions = [eq(products.isPublished, true), isNull(products.deletedAt)];
 
   if (filters.categoryIds?.length) {
-    conditions.push(inArray(products.categoryId, filters.categoryIds));
+    // Use subquery to check if product is in any of the specified categories
+    const productIdsInCategories = db
+      .selectDistinct({ productId: productToCategories.productId })
+      .from(productToCategories)
+      .where(inArray(productToCategories.categoryId, filters.categoryIds));
+    
+    conditions.push(inArray(products.id, productIdsInCategories));
   }
 
   if (filters.brandIds?.length) {
@@ -365,8 +372,8 @@ async function getAvailableFilters(productIds: string[]) {
         slug: categories.slug,
       })
       .from(categories)
-      .innerJoin(products, eq(products.categoryId, categories.id))
-      .where(inArray(products.id, productIds)),
+      .innerJoin(productToCategories, eq(productToCategories.categoryId, categories.id))
+      .where(inArray(productToCategories.productId, productIds)),
 
     // Colors
     db
@@ -770,17 +777,30 @@ export async function getProductsByCollection(
 // ============================================================================
 
 export async function getRelatedProducts(productId: string, limit = 4) {
-  const product = await db.query.products.findFirst({
-    where: eq(products.id, productId),
-  });
+  // Get categories for this product
+  const productCategories = await db
+    .select({ categoryId: productToCategories.categoryId })
+    .from(productToCategories)
+    .where(eq(productToCategories.productId, productId));
 
-  if (!product) return [];
+  if (productCategories.length === 0) return [];
 
-  // Find products in the same category
+  const categoryIds = productCategories.map(pc => pc.categoryId);
+
+  // Find products in the same categories
+  const relatedProductIds = await db
+    .selectDistinct({ productId: productToCategories.productId })
+    .from(productToCategories)
+    .where(and(
+      inArray(productToCategories.categoryId, categoryIds),
+      sql`${productToCategories.productId} != ${productId}`
+    ));
+
+  if (relatedProductIds.length === 0) return [];
+
   const related = await db.query.products.findMany({
     where: and(
-      eq(products.categoryId, product.categoryId!),
-      sql`${products.id} != ${productId}`,
+      inArray(products.id, relatedProductIds.map(r => r.productId)),
       eq(products.isPublished, true),
       isNull(products.deletedAt)
     ),

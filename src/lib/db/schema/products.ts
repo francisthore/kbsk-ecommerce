@@ -1,19 +1,18 @@
 import { pgTable, text, timestamp, uuid, boolean, jsonb, index, PgColumn, PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { z } from 'zod';
-import { categories } from './categories';
 import { genders } from './filters/genders';
 import { brands } from './brands';
 import { productTypeEnum } from './enums';
 import { productImages } from './images'; 
 import { productVariants } from './variants';
+import { productToCategories } from './productToCategories';
 
 export const products = pgTable('products', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description'),
-  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'set null' }),
   productType: productTypeEnum('product_type').notNull().default('tool'),
   // Gender is optional - used for PPE/workwear and gendered accessories only
@@ -39,10 +38,8 @@ export const products = pgTable('products', {
 }));
 
 export const productsRelations = relations(products, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [products.categoryId],
-    references: [categories.id],
-  }),
+  // Many-to-many categories relation
+  categories: many(productToCategories),
   gender: one(genders, {
     fields: [products.genderId],
     references: [genders.id],
@@ -59,7 +56,6 @@ export const insertProductSchema = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().optional().nullable(),
-  categoryId: z.string().uuid().optional().nullable(),
   brandId: z.string().uuid().optional().nullable(),
   productType: z.enum(['tool', 'accessory', 'consumable', 'ppe']).optional(),
   genderId: z.string().uuid().optional().nullable(),
@@ -81,7 +77,6 @@ export const selectProductSchema = insertProductSchema.extend({
 });
 
 export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type SelectProduct = z.infer<typeof selectProductSchema>;
 export type SelectProduct = z.infer<typeof selectProductSchema>;
 
 

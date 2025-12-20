@@ -11,7 +11,9 @@ interface Product {
   slug: string;
   isPublished: boolean;
   brand?: { name: string } | null;
-  category?: { name: string } | null;
+  categories?: Array<{
+    category: { name: string };
+  }>;
   variants: Array<{
     price: string;
     inStock: number;
@@ -70,7 +72,9 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 </div>
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                {product.category?.name || '—'}
+                {product.categories && product.categories.length > 0
+                  ? product.categories.map(c => c.category.name).join(', ')
+                  : '—'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
                 {product.brand?.name || '—'}

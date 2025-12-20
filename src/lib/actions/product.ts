@@ -12,6 +12,12 @@ import {
   variantOptionValues,
   productVariantOptions,
   variantOptionAssignments,
+  productToCategories,
+  colors,
+  sizes,
+  genders,
+  brands,
+  categories,
 } from '@/lib/db/schema';
 import { createProductFormSchema, type CreateProductInput } from '@/lib/validations/product';
 import { generateSlug } from '@/lib/utils/product';
@@ -95,7 +101,6 @@ export async function createProduct(input: CreateProductInput) {
         name: validatedData.name,
         slug: validatedData.slug,
         description: validatedData.description,
-        categoryId: validatedData.categoryId,
         brandId: validatedData.brandId,
         productType: validatedData.productType,
         genderId: validatedData.genderId,
@@ -107,6 +112,16 @@ export async function createProduct(input: CreateProductInput) {
         seoMetaTitle: validatedData.seoMetaTitle,
         seoMetaDescription: validatedData.seoMetaDescription,
       }).returning();
+
+      // Insert product-to-categories mappings (multi-category support)
+      if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
+        await tx.insert(productToCategories).values(
+          validatedData.categoryIds.map(categoryId => ({
+            productId: product.id,
+            categoryId,
+          }))
+        );
+      }
 
       // Insert product images
       if (validatedData.images.length > 0) {
@@ -285,5 +300,150 @@ export async function getBrands() {
   } catch (error) {
     console.error('Error fetching brands:', error);
     return { success: false, error: 'Failed to fetch brands' };
+  }
+}
+
+/**
+ * Get all colors (for predefined variant attributes)
+ */
+export async function getColors() {
+  try {
+    const colors = await db.query.colors.findMany({
+      orderBy: (colors, { asc }) => [asc(colors.name)],
+    });
+
+    return { success: true, colors };
+  } catch (error) {
+    console.error('Error fetching colors:', error);
+    return { success: false, error: 'Failed to fetch colors' };
+  }
+}
+
+/**
+ * Get all sizes (for predefined variant attributes)
+ */
+export async function getSizes() {
+  try {
+    const sizes = await db.query.sizes.findMany({
+      orderBy: (sizes, { asc }) => [asc(sizes.sortOrder)],
+    });
+
+    return { success: true, sizes };
+  } catch (error) {
+    console.error('Error fetching sizes:', error);
+    return { success: false, error: 'Failed to fetch sizes' };
+  }
+}
+
+/**
+ * Get all genders (for product categorization)
+ */
+export async function getGenders() {
+  try {
+    const genders = await db.query.genders.findMany({
+      orderBy: (genders, { asc }) => [asc(genders.label)],
+    });
+
+    return { success: true, genders };
+  } catch (error) {
+    console.error('Error fetching genders:', error);
+    return { success: false, error: 'Failed to fetch genders' };
+  }
+}
+
+/**
+ * Get all attributes in parallel (for form hydration)
+ */
+export async function getFormAttributes() {
+  try {
+    const [
+      categoriesResult,
+      brandsResult,
+      colorsResult,
+      sizesResult,
+      gendersResult,
+    ] = await Promise.all([
+      getCategories(),
+      getBrands(),
+      getColors(),
+      getSizes(),
+      getGenders(),
+    ]);
+
+    return {
+      success: true,
+      data: {
+        categories: categoriesResult.success ? categoriesResult.categories : [],
+        brands: brandsResult.success ? brandsResult.brands : [],
+        colors: colorsResult.success ? colorsResult.colors : [],
+        sizes: sizesResult.success ? sizesResult.sizes : [],
+        genders: gendersResult.success ? gendersResult.genders : [],
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching form attributes:', error);
+    return { success: false, error: 'Failed to fetch form attributes' };
+  }
+}
+
+/**
+ * Quick create brand
+ */
+export async function quickCreateBrand(name: string, imageUrl?: string) {
+  try {
+    await verifyAdminRole();
+
+    const slug = generateSlug(name);
+
+    const [brand] = await db.insert(brands).values({
+      name,
+      slug,
+      imageUrl: imageUrl || null,
+    }).returning();
+
+    revalidatePath('/admin/products');
+
+    return {
+      success: true,
+      brand,
+      message: 'Brand created successfully',
+    };
+  } catch (error) {
+    console.error('Error creating brand:', error);
+    return {
+      success: false,
+      error: 'Failed to create brand',
+    };
+  }
+}
+
+/**
+ * Quick create category
+ */
+export async function quickCreateCategory(name: string, parentId?: string) {
+  try {
+    await verifyAdminRole();
+
+    const slug = generateSlug(name);
+
+    const [category] = await db.insert(categories).values({
+      name,
+      slug,
+      parentId: parentId || null,
+    }).returning();
+
+    revalidatePath('/admin/products');
+
+    return {
+      success: true,
+      category,
+      message: 'Category created successfully',
+    };
+  } catch (error) {
+    console.error('Error creating category:', error);
+    return {
+      success: false,
+      error: 'Failed to create category',
+    };
   }
 }

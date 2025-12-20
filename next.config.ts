@@ -10,6 +10,20 @@ const nextConfig: NextConfig = {
     config.externals = [...(config.externals || []), { 'better-auth': 'better-auth' }];
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.s3.*.amazonaws.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.s3.amazonaws.com',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

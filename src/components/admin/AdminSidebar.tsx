@@ -13,6 +13,7 @@ import {
   Tags,
   FolderTree,
   LogOut,
+  Palette,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -44,6 +45,11 @@ const navigation = [
     name: 'Brands',
     href: '/admin/brands',
     icon: Tags,
+  },
+  {
+    name: 'Attributes',
+    href: '/admin/attributes',
+    icon: Palette,
   },
   {
     name: 'Orders',

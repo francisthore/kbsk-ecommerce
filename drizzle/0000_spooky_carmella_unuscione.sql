@@ -172,7 +172,6 @@ CREATE TABLE "products" (
 	"name" text NOT NULL,
 	"slug" text NOT NULL,
 	"description" text,
-	"category_id" uuid,
 	"brand_id" uuid,
 	"product_type" "product_type" DEFAULT 'tool' NOT NULL,
 	"gender_id" uuid,
@@ -188,6 +187,12 @@ CREATE TABLE "products" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "products_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+CREATE TABLE "product_to_categories" (
+	"product_id" uuid NOT NULL,
+	"category_id" uuid NOT NULL,
+	CONSTRAINT "product_to_categories_product_id_category_id_pk" PRIMARY KEY("product_id","category_id")
 );
 --> statement-breakpoint
 CREATE TABLE "product_images" (
@@ -458,6 +463,30 @@ CREATE TABLE "quote_events" (
 	"payload" jsonb
 );
 --> statement-breakpoint
+CREATE TABLE "shop_settings" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"shop_name" text DEFAULT 'KBSK E-commerce' NOT NULL,
+	"shop_country" text DEFAULT 'South Africa' NOT NULL,
+	"shop_timezone" text DEFAULT 'Africa/Johannesburg' NOT NULL,
+	"currency_code" text DEFAULT 'ZAR' NOT NULL,
+	"currency_symbol" text DEFAULT 'R' NOT NULL,
+	"currency_locale" text DEFAULT 'en-ZA' NOT NULL,
+	"tax_rate" numeric(5, 4) DEFAULT '0.1500' NOT NULL,
+	"markup_rate" numeric(5, 4) DEFAULT '0.3000' NOT NULL,
+	"free_shipping_threshold" numeric(10, 2) DEFAULT '500.00' NOT NULL,
+	"business_registration_number" text,
+	"vat_number" text,
+	"business_email" text,
+	"business_phone" text,
+	"business_address" text,
+	"enable_guest_checkout" boolean DEFAULT true NOT NULL,
+	"enable_wishlist" boolean DEFAULT true NOT NULL,
+	"enable_reviews" boolean DEFAULT true NOT NULL,
+	"enable_quotes" boolean DEFAULT true NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"updated_by" uuid
+);
+--> statement-breakpoint
 ALTER TABLE "auth_accounts" ADD CONSTRAINT "auth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_accounts" ADD CONSTRAINT "user_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -470,9 +499,10 @@ ALTER TABLE "addresses" ADD CONSTRAINT "addresses_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "categories" ADD CONSTRAINT "categories_parent_id_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_collections" ADD CONSTRAINT "product_collections_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_collections" ADD CONSTRAINT "product_collections_collection_id_collections_id_fk" FOREIGN KEY ("collection_id") REFERENCES "public"."collections"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "products" ADD CONSTRAINT "products_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_brand_id_brands_id_fk" FOREIGN KEY ("brand_id") REFERENCES "public"."brands"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "products" ADD CONSTRAINT "products_gender_id_genders_id_fk" FOREIGN KEY ("gender_id") REFERENCES "public"."genders"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_to_categories" ADD CONSTRAINT "product_to_categories_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "product_to_categories" ADD CONSTRAINT "product_to_categories_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_images" ADD CONSTRAINT "product_images_variant_id_product_variants_id_fk" FOREIGN KEY ("variant_id") REFERENCES "public"."product_variants"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "product_variants" ADD CONSTRAINT "product_variants_product_id_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -520,6 +550,8 @@ ALTER TABLE "quote_events" ADD CONSTRAINT "quote_events_by_user_id_users_id_fk" 
 CREATE INDEX "accounts_type_idx" ON "accounts" USING btree ("type");--> statement-breakpoint
 CREATE INDEX "accounts_email_idx" ON "accounts" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "products_slug_idx" ON "products" USING btree ("slug");--> statement-breakpoint
+CREATE INDEX "product_to_categories_product_idx" ON "product_to_categories" USING btree ("product_id");--> statement-breakpoint
+CREATE INDEX "product_to_categories_category_idx" ON "product_to_categories" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "product_images_product_sort_idx" ON "product_images" USING btree ("product_id","sort_order");--> statement-breakpoint
 CREATE INDEX "genders_slug_idx" ON "genders" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "genders_label_idx" ON "genders" USING btree ("label");--> statement-breakpoint
