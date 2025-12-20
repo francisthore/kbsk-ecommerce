@@ -21,7 +21,7 @@ import {
 } from '@/lib/db/schema';
 import { createProductFormSchema, type CreateProductInput } from '@/lib/validations/product';
 import { generateSlug } from '@/lib/utils/product';
-import { eq } from 'drizzle-orm';
+import { eq, and, isNull, ne } from 'drizzle-orm';
 
 /**
  * Verify admin role for protected actions
@@ -75,7 +75,7 @@ export async function generateUniqueSlug(name: string): Promise<string> {
 }
 
 /**
- * Create a new product with variants (Transaction-safe)
+ * Create a new product with variants (No transaction - compatible with neon-http)
  */
 export async function createProduct(input: CreateProductInput) {
   try {
@@ -94,16 +94,357 @@ export async function createProduct(input: CreateProductInput) {
       };
     }
 
-    // 4. Execute transaction
-    const result = await db.transaction(async (tx) => {
-      // Insert product
-      const [product] = await tx.insert(products).values({
+    // 4. Insert Product (no transaction)
+    const [product] = await db.insert(products).values({
+      name: validatedData.name,
+      slug: validatedData.slug,
+      description: validatedData.description,
+      brandId: validatedData.brandId || null,
+      productType: validatedData.productType,
+      genderId: validatedData.genderId || null,
+      specs: validatedData.specs || {},
+      isPublished: validatedData.isPublished,
+      isBundle: validatedData.isBundle,
+      hazmat: validatedData.hazmat,
+      unNumber: validatedData.unNumber,
+      seoMetaTitle: validatedData.seoMetaTitle,
+      seoMetaDescription: validatedData.seoMetaDescription,
+    }).returning();
+
+    // 5. Category Mappings
+    if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
+      await db.insert(productToCategories).values(
+        validatedData.categoryIds.map(categoryId => ({
+          productId: product.id,
+          categoryId,
+        }))
+      );
+    }
+
+    // 6. Product Images
+    if (validatedData.images.length > 0) {
+      await db.insert(productImages).values(
+        validatedData.images.map((img, index) => ({
+          productId: product.id,
+          variantId: null, // Product-level images
+          url: img.url,
+          kind: 'image',
+          sortOrder: img.displayOrder ?? index,
+          isPrimary: img.isPrimary ?? index === 0,
+        }))
+      );
+    }
+
+    // 7. Handle Variants (Simple or Variable)
+    if (validatedData.productMode === 'simple') {
+      // Simple product - insert single variant
+      const variantData = validatedData.variants[0];
+      await db.insert(productVariants).values({
+        productId: product.id,
+        sku: variantData.sku,
+        price: variantData.price,
+        salePrice: variantData.salePrice,
+        inStock: variantData.inStock,
+        backorderable: variantData.backorderable,
+        weight: variantData.weight,
+        colorId: null,
+        sizeId: null,
+        specs: {},
+      });
+    } else {
+      // Variable product - handle attribute groups and variants
+      const optionGroupMap = new Map<string, string>();
+      const optionValueMap = new Map<string, string>();
+
+      // Create attribute groups if any
+      if (validatedData.attributeGroups && validatedData.attributeGroups.length > 0) {
+        for (const optionGroup of validatedData.attributeGroups) {
+          const [insertedGroup] = await db.insert(variantOptionGroups).values({
+            name: optionGroup.name,
+            displayOrder: optionGroup.displayOrder,
+          }).returning();
+
+          if (optionGroup.id) optionGroupMap.set(optionGroup.id, insertedGroup.id);
+
+          await db.insert(productVariantOptions).values({
+            productId: product.id,
+            groupId: insertedGroup.id,
+            required: true,
+            displayOrder: optionGroup.displayOrder,
+          });
+
+          for (const value of optionGroup.options) {
+            const [insertedValue] = await db.insert(variantOptionValues).values({
+              groupId: insertedGroup.id,
+              value: value.value,
+              displayOrder: value.displayOrder,
+            }).returning();
+
+            optionValueMap.set(value.value, insertedValue.id);
+          }
+        }
+      }
+
+      // Insert variants
+      for (const variantData of validatedData.variants) {
+        let colorId: string | null = null;
+        let sizeId: string | null = null;
+
+        // Extract color/size IDs from attributes if present
+        if ('attributes' in variantData && variantData.attributes) {
+          for (const attr of variantData.attributes) {
+            if (attr.groupType === 'color' && attr.colorId) {
+              colorId = attr.colorId;
+            } else if (attr.groupType === 'size' && attr.sizeId) {
+              sizeId = attr.sizeId;
+            }
+          }
+        }
+
+        const [insertedVariant] = await db.insert(productVariants).values({
+          productId: product.id,
+          sku: variantData.sku,
+          price: variantData.price,
+          salePrice: variantData.salePrice,
+          inStock: variantData.inStock,
+          backorderable: variantData.backorderable,
+          weight: variantData.weight,
+          colorId: colorId,
+          sizeId: sizeId,
+          specs: {},
+        }).returning();
+
+        // Create variant option assignments for custom attributes
+        if ('attributes' in variantData && variantData.attributes) {
+          for (const attr of variantData.attributes) {
+            if (attr.groupType === 'custom') {
+              const valueId = optionValueMap.get(attr.value);
+              if (valueId) {
+                await db.insert(variantOptionAssignments).values({
+                  variantId: insertedVariant.id,
+                  valueId: valueId,
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 8. Revalidate and return success
+    revalidatePath('/admin/products');
+    revalidatePath('/products');
+
+    return {
+      success: true,
+      productId: product.id,
+    };
+  } catch (error) {
+    console.error('Error creating product:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create product',
+    };
+  }
+}
+
+/**
+ * Get product by ID for editing
+ */
+export async function getProductForEdit(productId: string) {
+  try {
+    // Fetch product with basic relations
+    const product = await db.query.products.findFirst({
+      where: (products, { eq, and, isNull }) => 
+        and(eq(products.id, productId), isNull(products.deletedAt)),
+      with: {
+        brand: true,
+        gender: true,
+      },
+    });
+
+    if (!product) {
+      return { success: false, error: 'Product not found' };
+    }
+
+    // Fetch categories separately
+    const productCategories = await db.query.productToCategories.findMany({
+      where: (ptc, { eq }) => eq(ptc.productId, productId),
+      with: {
+        category: true,
+      },
+    });
+
+    // Fetch images separately
+    const productImagesData = await db.query.productImages.findMany({
+      where: (images, { eq, and, isNull }) => 
+        and(eq(images.productId, productId), isNull(images.variantId)),
+      orderBy: (images, { asc }) => [asc(images.sortOrder)],
+    });
+
+    // Fetch variants separately
+    const productVariantsData = await db.query.productVariants.findMany({
+      where: (variants, { eq, and, isNull }) => 
+        and(eq(variants.productId, productId), isNull(variants.deletedAt)),
+      with: {
+        color: true,
+        size: true,
+      },
+    });
+
+    // Fetch variant options separately
+    const productVariantOptionsData = await db.query.productVariantOptions.findMany({
+      where: (pvo, { eq }) => eq(pvo.productId, productId),
+      with: {
+        group: true,
+      },
+      orderBy: (options, { asc }) => [asc(options.displayOrder)],
+    });
+
+    // Fetch option values for each group
+    const variantGroups = await Promise.all(
+      productVariantOptionsData.map(async (pvo) => {
+        const values = await db.query.variantOptionValues.findMany({
+          where: (values, { eq }) => eq(values.groupId, pvo.group.id),
+          orderBy: (values, { asc }) => [asc(values.displayOrder)],
+        });
+        return {
+          ...pvo,
+          group: {
+            ...pvo.group,
+            values,
+          },
+        };
+      })
+    );
+
+    // Transform data to match form structure
+    const productMode = productVariantsData.length > 1 || variantGroups.length > 0 
+      ? 'variable' 
+      : 'simple';
+
+    const categoryIds = productCategories.map(pc => pc.category.id);
+    
+    const images = productImagesData.map(img => ({
+      id: img.id,
+      url: img.url,
+      altText: img.url,
+      displayOrder: img.sortOrder,
+      isPrimary: img.isPrimary,
+    }));
+
+    const attributeGroups = variantGroups.map(vo => ({
+      id: vo.group.id,
+      name: vo.group.name,
+      type: vo.group.name.toLowerCase() === 'color' ? 'color' as const :
+            vo.group.name.toLowerCase() === 'size' ? 'size' as const : 
+            'custom' as const,
+      options: vo.group.values.map(v => ({
+        value: v.value,
+        displayOrder: v.displayOrder,
+        colorId: undefined,
+        sizeId: undefined,
+      })),
+      displayOrder: vo.displayOrder,
+    }));
+
+    const variants = productVariantsData.map(v => {
+      if (productMode === 'simple') {
+        return {
+          id: v.id,
+          variantType: 'simple' as const,
+          sku: v.sku,
+          price: v.price,
+          salePrice: v.salePrice || undefined,
+          inStock: v.inStock,
+          backorderable: v.backorderable,
+        };
+      } else {
+        const attributes = [
+          ...(v.color ? [{ 
+            groupName: 'Color', 
+            groupType: 'color' as const, 
+            value: v.color.name,
+            colorId: v.color.id,
+          }] : []),
+          ...(v.size ? [{
+            groupName: 'Size',
+            groupType: 'size' as const,
+            value: v.size.name,
+            sizeId: v.size.id,
+          }] : []),
+        ];
+
+        return {
+          id: v.id,
+          variantType: 'variable' as const,
+          combinationId: v.id,
+          displayName: attributes.map(a => a.value).join(' / ') || v.sku,
+          sku: v.sku,
+          price: v.price,
+          salePrice: v.salePrice || undefined,
+          inStock: v.inStock,
+          backorderable: v.backorderable,
+          attributes,
+          isEnabled: true,
+        };
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        id: product.id,
+        productMode,
+        name: product.name,
+        slug: product.slug,
+        description: product.description || undefined,
+        categoryIds,
+        brandId: product.brandId || undefined,
+        productType: product.productType,
+        genderId: product.genderId || undefined,
+        specs: product.specs || {},
+        images,
+        variants,
+        attributeGroups: productMode === 'variable' ? attributeGroups : [],
+        isPublished: product.isPublished,
+        isBundle: product.isBundle,
+        hazmat: product.hazmat,
+        unNumber: product.unNumber || undefined,
+        seoMetaTitle: product.seoMetaTitle || undefined,
+        seoMetaDescription: product.seoMetaDescription || undefined,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching product for edit:', error);
+    return { success: false, error: 'Failed to fetch product' };
+  }
+}
+
+/**
+ * Update an existing product
+ */
+export async function updateProduct(productId: string, input: CreateProductInput) {
+  try {
+    await verifyAdminRole();
+
+    const validatedData = createProductFormSchema.parse(input);
+
+    // Check slug availability (excluding current product)
+    const slugCheck = await checkSlugAvailability(validatedData.slug, productId);
+    if (!slugCheck.available) {
+      return { success: false, error: 'Slug already exists' };
+    }
+
+    // Update product
+    await db.update(products)
+      .set({
         name: validatedData.name,
         slug: validatedData.slug,
         description: validatedData.description,
-        brandId: validatedData.brandId,
+        brandId: validatedData.brandId || null,
         productType: validatedData.productType,
-        genderId: validatedData.genderId,
+        genderId: validatedData.genderId || null,
         specs: validatedData.specs || {},
         isPublished: validatedData.isPublished,
         isBundle: validatedData.isBundle,
@@ -111,147 +452,98 @@ export async function createProduct(input: CreateProductInput) {
         unNumber: validatedData.unNumber,
         seoMetaTitle: validatedData.seoMetaTitle,
         seoMetaDescription: validatedData.seoMetaDescription,
-      }).returning();
+      })
+      .where(eq(products.id, productId));
 
-      // Insert product-to-categories mappings (multi-category support)
-      if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
-        await tx.insert(productToCategories).values(
-          validatedData.categoryIds.map(categoryId => ({
-            productId: product.id,
-            categoryId,
-          }))
-        );
-      }
+    // Update categories
+    await db.delete(productToCategories).where(eq(productToCategories.productId, productId));
+    if (validatedData.categoryIds && validatedData.categoryIds.length > 0) {
+      await db.insert(productToCategories).values(
+        validatedData.categoryIds.map(categoryId => ({
+          productId,
+          categoryId,
+        }))
+      );
+    }
 
-      // Insert product images
-      if (validatedData.images.length > 0) {
-        await tx.insert(productImages).values(
-          validatedData.images.map((img, index) => ({
-            productId: product.id,
-            variantId: null, // Product-level images
-            url: img.url,
-            altText: img.altText || validatedData.name,
-            displayOrder: img.displayOrder ?? index,
-            isPrimary: img.isPrimary ?? index === 0,
-          }))
-        );
-      }
+    // Update images - delete existing and insert new
+    await db.delete(productImages).where(eq(productImages.productId, productId));
+    if (validatedData.images.length > 0) {
+      await db.insert(productImages).values(
+        validatedData.images.map((img, index) => ({
+          productId,
+          variantId: null,
+          url: img.url,
+          kind: 'image',
+          sortOrder: img.displayOrder ?? index,
+          isPrimary: img.isPrimary ?? index === 0,
+        }))
+      );
+    }
 
-      // Handle variant options if provided
-      const optionGroupMap = new Map<string, string>(); // temp ID -> real ID
-      const optionValueMap = new Map<string, string>(); // temp ID -> real ID
+    // Soft delete existing variants
+    await db.update(productVariants)
+      .set({ deletedAt: new Date() })
+      .where(eq(productVariants.productId, productId));
 
-      if (validatedData.variantOptions && validatedData.variantOptions.length > 0) {
-        // Insert option groups
-        for (const optionGroup of validatedData.variantOptions) {
-          const [insertedGroup] = await tx.insert(variantOptionGroups).values({
-            name: optionGroup.name,
-            displayOrder: optionGroup.displayOrder,
-          }).returning();
+    // Insert updated variants (same logic as create)
+    if (validatedData.productMode === 'simple') {
+      const variantData = validatedData.variants[0];
+      await db.insert(productVariants).values({
+        productId,
+        sku: variantData.sku,
+        price: variantData.price,
+        salePrice: variantData.salePrice,
+        inStock: variantData.inStock,
+        backorderable: variantData.backorderable,
+        weight: variantData.weight,
+        colorId: null,
+        sizeId: null,
+        specs: {},
+      });
+    } else {
+      // Variable product logic (simplified - reuses existing option groups if possible)
+      for (const variantData of validatedData.variants) {
+        let colorId: string | null = null;
+        let sizeId: string | null = null;
 
-          // Map temp ID to real ID
-          if (optionGroup.id) {
-            optionGroupMap.set(optionGroup.id, insertedGroup.id);
-          }
-
-          // Insert option values
-          for (const value of optionGroup.values) {
-            const [insertedValue] = await tx.insert(variantOptionValues).values({
-              groupId: insertedGroup.id,
-              value: value.value,
-              displayOrder: value.displayOrder,
-            }).returning();
-
-            // Map temp ID to real ID
-            if (value.id) {
-              optionValueMap.set(value.id, insertedValue.id);
+        if ('attributes' in variantData && variantData.attributes) {
+          for (const attr of variantData.attributes) {
+            if (attr.groupType === 'color' && attr.colorId) {
+              colorId = attr.colorId;
+            } else if (attr.groupType === 'size' && attr.sizeId) {
+              sizeId = attr.sizeId;
             }
           }
-
-          // Link option group to product
-          await tx.insert(productVariantOptions).values({
-            productId: product.id,
-            groupId: insertedGroup.id,
-            required: optionGroup.required,
-            displayOrder: optionGroup.displayOrder,
-          });
         }
-      }
 
-      // Insert variants
-      let defaultVariantId: string | null = null;
-      
-      for (let i = 0; i < validatedData.variants.length; i++) {
-        const variant = validatedData.variants[i];
-        
-        const [insertedVariant] = await tx.insert(productVariants).values({
-          productId: product.id,
-          sku: variant.sku,
-          price: variant.price,
-          salePrice: variant.salePrice,
-          inStock: variant.inStock,
-          backorderable: variant.backorderable,
-          weight: variant.weight,
-          dimensions: variant.dimensions,
+        await db.insert(productVariants).values({
+          productId,
+          sku: variantData.sku,
+          price: variantData.price,
+          salePrice: variantData.salePrice,
+          inStock: variantData.inStock,
+          backorderable: variantData.backorderable,
+          weight: variantData.weight,
+          colorId,
+          sizeId,
           specs: {},
-        }).returning();
-
-        // Set first variant as default
-        if (i === 0) {
-          defaultVariantId = insertedVariant.id;
-        }
-
-        // Insert variant option assignments
-        if (variant.optionValues && variant.optionValues.length > 0) {
-          for (const optionValue of variant.optionValues) {
-            const realValueId = optionValueMap.get(optionValue.valueId) || optionValue.valueId;
-            
-            await tx.insert(variantOptionAssignments).values({
-              variantId: insertedVariant.id,
-              optionValueId: realValueId,
-            });
-          }
-        }
+        });
       }
-
-      // Update product with default variant ID
-      if (defaultVariantId) {
-        await tx.update(products)
-          .set({ defaultVariantId })
-          .where(eq(products.id, product.id));
-      }
-
-      return product;
-    });
-
-    // 5. Revalidate cache
-    revalidatePath('/admin/products');
-    revalidatePath('/shop');
-
-    return {
-      success: true,
-      product: result,
-      message: 'Product created successfully',
-    };
-  } catch (error) {
-    console.error('Error creating product:', error);
-    
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message,
-      };
     }
-    
-    return {
-      success: false,
-      error: 'Failed to create product',
-    };
+
+    revalidatePath('/admin/products');
+    revalidatePath(`/products/${validatedData.slug}`);
+
+    return { success: true, productId };
+  } catch (error) {
+    console.error('Error updating product:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to update product' };
   }
 }
 
 /**
- * Get all option groups with values (for form dropdowns)
+ * Get all variant option groups (for form dropdowns)
  */
 export async function getVariantOptionGroups() {
   try {
@@ -276,13 +568,11 @@ export async function getVariantOptionGroups() {
  */
 export async function getCategories() {
   try {
-    const categories = await db.query.categories.findMany({
+    const data = await db.query.categories.findMany({
       orderBy: (categories, { asc }) => [asc(categories.name)],
     });
-
-    return { success: true, categories };
+    return { success: true, categories: data };
   } catch (error) {
-    console.error('Error fetching categories:', error);
     return { success: false, error: 'Failed to fetch categories' };
   }
 }
@@ -292,13 +582,11 @@ export async function getCategories() {
  */
 export async function getBrands() {
   try {
-    const brands = await db.query.brands.findMany({
+    const data = await db.query.brands.findMany({
       orderBy: (brands, { asc }) => [asc(brands.name)],
     });
-
-    return { success: true, brands };
+    return { success: true, brands: data };
   } catch (error) {
-    console.error('Error fetching brands:', error);
     return { success: false, error: 'Failed to fetch brands' };
   }
 }
@@ -308,13 +596,11 @@ export async function getBrands() {
  */
 export async function getColors() {
   try {
-    const colors = await db.query.colors.findMany({
+    const data = await db.query.colors.findMany({
       orderBy: (colors, { asc }) => [asc(colors.name)],
     });
-
-    return { success: true, colors };
+    return { success: true, colors: data };
   } catch (error) {
-    console.error('Error fetching colors:', error);
     return { success: false, error: 'Failed to fetch colors' };
   }
 }
@@ -324,13 +610,11 @@ export async function getColors() {
  */
 export async function getSizes() {
   try {
-    const sizes = await db.query.sizes.findMany({
+    const data = await db.query.sizes.findMany({
       orderBy: (sizes, { asc }) => [asc(sizes.sortOrder)],
     });
-
-    return { success: true, sizes };
+    return { success: true, sizes: data };
   } catch (error) {
-    console.error('Error fetching sizes:', error);
     return { success: false, error: 'Failed to fetch sizes' };
   }
 }
@@ -340,13 +624,11 @@ export async function getSizes() {
  */
 export async function getGenders() {
   try {
-    const genders = await db.query.genders.findMany({
+    const data = await db.query.genders.findMany({
       orderBy: (genders, { asc }) => [asc(genders.label)],
     });
-
-    return { success: true, genders };
+    return { success: true, genders: data };
   } catch (error) {
-    console.error('Error fetching genders:', error);
     return { success: false, error: 'Failed to fetch genders' };
   }
 }
@@ -356,13 +638,7 @@ export async function getGenders() {
  */
 export async function getFormAttributes() {
   try {
-    const [
-      categoriesResult,
-      brandsResult,
-      colorsResult,
-      sizesResult,
-      gendersResult,
-    ] = await Promise.all([
+    const [categoriesResult, brandsResult, colorsResult, sizesResult, gendersResult] = await Promise.all([
       getCategories(),
       getBrands(),
       getColors(),
@@ -392,28 +668,19 @@ export async function getFormAttributes() {
 export async function quickCreateBrand(name: string, imageUrl?: string) {
   try {
     await verifyAdminRole();
-
-    const slug = generateSlug(name);
+    const slug = await generateUniqueSlug(name); // Use unique slug generator
 
     const [brand] = await db.insert(brands).values({
       name,
       slug,
-      imageUrl: imageUrl || null,
+      logoUrl: imageUrl || null, // Changed from imageUrl to logoUrl based on schema
     }).returning();
 
     revalidatePath('/admin/products');
-
-    return {
-      success: true,
-      brand,
-      message: 'Brand created successfully',
-    };
+    return { success: true, brand, message: 'Brand created successfully' };
   } catch (error) {
     console.error('Error creating brand:', error);
-    return {
-      success: false,
-      error: 'Failed to create brand',
-    };
+    return { success: false, error: 'Failed to create brand' };
   }
 }
 
@@ -423,8 +690,7 @@ export async function quickCreateBrand(name: string, imageUrl?: string) {
 export async function quickCreateCategory(name: string, parentId?: string) {
   try {
     await verifyAdminRole();
-
-    const slug = generateSlug(name);
+    const slug = await generateUniqueSlug(name);
 
     const [category] = await db.insert(categories).values({
       name,
@@ -433,17 +699,9 @@ export async function quickCreateCategory(name: string, parentId?: string) {
     }).returning();
 
     revalidatePath('/admin/products');
-
-    return {
-      success: true,
-      category,
-      message: 'Category created successfully',
-    };
+    return { success: true, category, message: 'Category created successfully' };
   } catch (error) {
     console.error('Error creating category:', error);
-    return {
-      success: false,
-      error: 'Failed to create category',
-    };
+    return { success: false, error: 'Failed to create category' };
   }
 }

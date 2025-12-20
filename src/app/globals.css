@@ -7,16 +7,22 @@
   --color-primary: #1E4620;
   --color-primary-dark: #152f17;
   --color-primary-light: #2a5f2e;
+  --color-primary-foreground: #FFFFFF;
   
   /* Secondary Brand - Muted Gold/Mustard */
   --color-secondary: #A8873E;
   --color-secondary-dark: #8a6f32;
   --color-secondary-light: #c4a052;
+  --color-secondary-foreground: #FFFFFF;
   
   /* Call-to-Action - Bright Orange */
   --color-cta: #FF7A00;
   --color-cta-dark: #e66d00;
   --color-cta-light: #ff8f26;
+  
+  /* Accent colors - using CTA orange */
+  --color-accent: #FF7A00;
+  --color-accent-foreground: #FFFFFF;
   
   /* Background & Base Colors */
   --color-white: #FFFFFF;
@@ -48,6 +54,33 @@
   --color-warning: #FF7A00;
   --color-error: #d33918;
   --color-info: #0066cc;
+  
+  /* Destructive/Error colors */
+  --color-destructive: #d33918;
+  --color-destructive-foreground: #FFFFFF;
+  
+  /* Background colors */
+  --color-background: #FFFFFF;
+  --color-foreground: #333333;
+  
+  /* Muted colors */
+  --color-muted: #F4F4F4;
+  --color-muted-foreground: #666666;
+  
+  /* Card colors */
+  --color-card: #FFFFFF;
+  --color-card-foreground: #333333;
+  
+  /* Popover colors */
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #333333;
+  
+  /* Border colors */
+  --color-border: #E0E0E0;
+  --color-input: #E0E0E0;
+  
+  /* Ring colors for focus states */
+  --color-ring: #1E4620;
 
   /* Font family */
   --font-jost: "Jost", sans-serif;
@@ -88,4 +121,16 @@
   --text-footnote: 12px;
   --text-footnote--line-height: 18px;
   --text-footnote--font-weight: 400;
+}
+
+/* Apply base styles */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-jost);
+  }
 }

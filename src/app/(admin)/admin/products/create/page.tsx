@@ -1,5 +1,5 @@
 import { getFormAttributes } from '@/lib/actions/product';
-import ProductCreateForm from '@/components/admin/ProductCreateForm';
+import MasterProductCreateForm from '@/components/admin/MasterProductCreateForm';
 
 export const metadata = {
   title: 'Create Product | Admin Dashboard',
@@ -9,7 +9,7 @@ export const metadata = {
 export default async function CreateProductPage() {
   const attributesResult = await getFormAttributes();
 
-  if (!attributesResult.success) {
+  if (!attributesResult.success || !attributesResult.data) {
     return (
       <div className="p-8">
         <div className="rounded-lg bg-red-50 p-4 text-red-800">
@@ -28,7 +28,7 @@ export default async function CreateProductPage() {
         </p>
       </div>
 
-      <ProductCreateForm attributes={attributesResult.data} />
+      <MasterProductCreateForm attributes={attributesResult.data} />
     </div>
   );
 }
