@@ -693,3 +693,34 @@ export async function deleteGender(id: string) {
     };
   }
 }
+
+// =============================================================================
+// PRODUCTS ACTIONS
+// =============================================================================
+
+export async function getProducts() {
+  try {
+    const allProducts = await db.query.products.findMany({
+      with: {
+        brand: true,
+        categories: {
+          with: {
+            category: true,
+          },
+        },
+        variants: {
+          limit: 1,
+          orderBy: (variants, { asc }) => [asc(variants.createdAt)],
+        },
+      },
+      where: (products, { isNull }) => isNull(products.deletedAt),
+      orderBy: (products, { desc }) => [desc(products.createdAt)],
+      limit: 100,
+    });
+
+    return { success: true, data: allProducts };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return { success: false, error: "Failed to fetch products" };
+  }
+}

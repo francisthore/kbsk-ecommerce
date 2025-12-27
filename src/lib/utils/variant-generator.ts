@@ -20,6 +20,8 @@ export interface GeneratedVariant extends Omit<VariableVariant, 'id'> {
     colorId?: string;
     sizeId?: string;
   }>;
+  colorId?: string;
+  sizeId?: string;
   sku: string;
   price: string;
   salePrice?: string;
@@ -113,6 +115,10 @@ export function generateVariantCombinations(
     
     const sku = `${baseSKU}-${skuSuffix}-${(index + 1).toString().padStart(3, '0')}`;
 
+    // Extract colorId and sizeId from combination
+    const colorAttr = combination.find(attr => attr.groupType === 'color');
+    const sizeAttr = combination.find(attr => attr.groupType === 'size');
+
     // Build variant object
     return {
       variantType: 'variable' as const,
@@ -125,6 +131,8 @@ export function generateVariantCombinations(
         colorId: attr.colorId,
         sizeId: attr.sizeId,
       })),
+      colorId: colorAttr?.colorId,
+      sizeId: sizeAttr?.sizeId,
       sku,
       price: basePrice,
       salePrice: undefined,

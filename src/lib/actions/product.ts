@@ -190,12 +190,20 @@ export async function createProduct(input: CreateProductInput) {
         let colorId: string | null = null;
         let sizeId: string | null = null;
 
-        // Extract color/size IDs from attributes if present
+        // Extract colorId and sizeId directly from variant data (for variable products)
+        if ('colorId' in variantData && variantData.colorId) {
+          colorId = variantData.colorId;
+        }
+        if ('sizeId' in variantData && variantData.sizeId) {
+          sizeId = variantData.sizeId;
+        }
+
+        // If not found directly, try to extract from attributes (legacy support)
         if ('attributes' in variantData && variantData.attributes) {
           for (const attr of variantData.attributes) {
-            if (attr.groupType === 'color' && attr.colorId) {
+            if (attr.groupType === 'color' && attr.colorId && !colorId) {
               colorId = attr.colorId;
-            } else if (attr.groupType === 'size' && attr.sizeId) {
+            } else if (attr.groupType === 'size' && attr.sizeId && !sizeId) {
               sizeId = attr.sizeId;
             }
           }
@@ -383,6 +391,9 @@ export async function getProductForEdit(productId: string) {
           sku: v.sku,
           price: v.price,
           salePrice: v.salePrice || undefined,
+          colorId: v.colorId || undefined,
+          sizeId: v.sizeId || undefined,
+          genderId: v.genderId || undefined,
           inStock: v.inStock,
           backorderable: v.backorderable,
           attributes,
@@ -481,9 +492,16 @@ export async function updateProduct(productId: string, input: CreateProductInput
       );
     }
 
-    // Soft delete existing variants
-    await db.update(productVariants)
-      .set({ deletedAt: new Date() })
+    // Safeguard: For variable products, ensure variants are provided before deleting existing ones
+    if (validatedData.productMode === 'variable' && (!validatedData.variants || validatedData.variants.length === 0)) {
+      return { 
+        success: false, 
+        error: 'Variable products must have at least one variant. Please generate variants before saving.' 
+      };
+    }
+
+    // Hard delete existing variants (to avoid SKU unique constraint issues)
+    await db.delete(productVariants)
       .where(eq(productVariants.productId, productId));
 
     // Insert updated variants (same logic as create)
@@ -502,16 +520,25 @@ export async function updateProduct(productId: string, input: CreateProductInput
         specs: {},
       });
     } else {
-      // Variable product logic (simplified - reuses existing option groups if possible)
+      // Variable product logic - handle colorId/sizeId properly
       for (const variantData of validatedData.variants) {
         let colorId: string | null = null;
         let sizeId: string | null = null;
 
+        // Extract colorId and sizeId directly from variant data (for variable products)
+        if ('colorId' in variantData && variantData.colorId) {
+          colorId = variantData.colorId;
+        }
+        if ('sizeId' in variantData && variantData.sizeId) {
+          sizeId = variantData.sizeId;
+        }
+
+        // If not found directly, try to extract from attributes (legacy support)
         if ('attributes' in variantData && variantData.attributes) {
           for (const attr of variantData.attributes) {
-            if (attr.groupType === 'color' && attr.colorId) {
+            if (attr.groupType === 'color' && attr.colorId && !colorId) {
               colorId = attr.colorId;
-            } else if (attr.groupType === 'size' && attr.sizeId) {
+            } else if (attr.groupType === 'size' && attr.sizeId && !sizeId) {
               sizeId = attr.sizeId;
             }
           }

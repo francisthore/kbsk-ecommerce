@@ -1,32 +1,11 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { db } from '@/lib/db';
 import ProductsTable from '@/components/admin/ProductsTable';
-
-async function getProducts() {
-  const products = await db.query.products.findMany({
-    with: {
-      brand: true,
-      categories: {
-        with: {
-          category: true,
-        },
-      },
-      variants: {
-        limit: 1,
-        orderBy: (variants, { asc }) => [asc(variants.createdAt)],
-      },
-    },
-    where: (products, { isNull }) => isNull(products.deletedAt),
-    orderBy: (products, { desc }) => [desc(products.createdAt)],
-    limit: 100,
-  });
-
-  return products;
-}
+import { getProducts } from '@/lib/actions/admin-data';
 
 export default async function ProductsPage() {
-  const products = await getProducts();
+  const result = await getProducts();
+  const products = result.success && result.data ? result.data : [];
 
   return (
     <div>

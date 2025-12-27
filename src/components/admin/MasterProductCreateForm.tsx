@@ -6,7 +6,7 @@
  * =====================================================
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
@@ -28,6 +28,7 @@ import {
   updateProduct, 
   checkSlugAvailability,
 } from '@/lib/actions/product';
+import { createColor, createSize } from '@/lib/actions/admin-data';
 import { deleteFile } from '@/lib/actions/s3';
 import { 
   generateVariantCombinations,
@@ -42,13 +43,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +115,16 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
   const [bulkPrice, setBulkPrice] = useState('');
   const [bulkStock, setBulkStock] = useState('');
 
+  // Quick create dialogs
+  const [showColorDialog, setShowColorDialog] = useState(false);
+  const [showSizeDialog, setShowSizeDialog] = useState(false);
+  const [quickCreateColorName, setQuickCreateColorName] = useState('');
+  const [quickCreateColorHex, setQuickCreateColorHex] = useState('#000000');
+  const [quickCreateSizeName, setQuickCreateSizeName] = useState('');
+  const [quickCreateSizeOrder, setQuickCreateSizeOrder] = useState(0);
+  const [isCreatingColor, setIsCreatingColor] = useState(false);
+  const [isCreatingSize, setIsCreatingSize] = useState(false);
+
   // Image management state
   const [uploadedImages, setUploadedImages] = useState<Array<{
     id?: string;
@@ -146,13 +165,42 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
     },
   });
 
-  // Debug: Log form errors
-  console.log("Form Errors:", form.formState.errors);
-
   // Watch form values
   const watchedPrice = form.watch('variants.0.price');
   const watchedName = form.watch('name');
   const watchedBrandId = form.watch('brandId');
+
+  // Initialize form state when in edit mode
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      // Set product mode
+      setProductMode(initialData.productMode || 'simple');
+      
+      // Set specs
+      if (initialData.specs) {
+        setSpecs(initialData.specs);
+      }
+      
+      // Set attribute groups if variable product
+      if (initialData.productMode === 'variable' && initialData.attributeGroups) {
+        setAttributeGroups(initialData.attributeGroups);
+      }
+      
+      // Set variants if variable product
+      if (initialData.productMode === 'variable' && initialData.variants) {
+        setGeneratedVariants(initialData.variants);
+        // Also sync to form state so they appear in the table
+        form.setValue('variants', initialData.variants as any);
+        form.setValue('attributeGroups', initialData.attributeGroups || []);
+      }
+      
+      // Set images
+      if (initialData.images) {
+        setUploadedImages(initialData.images);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ==================== SKU GENERATION ====================
 
@@ -306,23 +354,135 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
   };
 
   const handleGroupTypeChange = (groupIndex: number, type: 'color' | 'size' | 'custom') => {
-    let options: AttributeOption[] = [];
+    // Don't auto-populate - let user select what they need
     if (type === 'color') {
-      options = attributes.colors.map((color, idx) => ({
+      updateAttributeGroup(groupIndex, { type, name: 'Color', options: [] });
+    } else if (type === 'size') {
+      updateAttributeGroup(groupIndex, { type, name: 'Size', options: [] });
+    } else {
+      updateAttributeGroup(groupIndex, { type, name: '', options: [] });
+    }
+  };
+
+  const toggleColorOption = (groupIndex: number, colorId: string) => {
+    const group = attributeGroups[groupIndex];
+    const color = attributes.colors.find(c => c.id === colorId);
+    if (!color) return;
+
+    const existingIndex = group.options.findIndex(opt => opt.colorId === colorId);
+    let updatedOptions: AttributeOption[];
+    
+    if (existingIndex >= 0) {
+      // Remove it
+      updatedOptions = group.options.filter((_, i) => i !== existingIndex);
+    } else {
+      // Add it
+      updatedOptions = [...group.options, {
         value: color.name,
         colorId: color.id,
-        displayOrder: idx,
-      }));
-      updateAttributeGroup(groupIndex, { type, name: 'Color', options });
-    } else if (type === 'size') {
-      options = attributes.sizes.map(size => ({
+        displayOrder: group.options.length,
+      }];
+    }
+    
+    updateAttributeGroup(groupIndex, { options: updatedOptions });
+  };
+
+  const toggleSizeOption = (groupIndex: number, sizeId: string) => {
+    const group = attributeGroups[groupIndex];
+    const size = attributes.sizes.find(s => s.id === sizeId);
+    if (!size) return;
+
+    const existingIndex = group.options.findIndex(opt => opt.sizeId === sizeId);
+    let updatedOptions: AttributeOption[];
+    
+    if (existingIndex >= 0) {
+      // Remove it
+      updatedOptions = group.options.filter((_, i) => i !== existingIndex);
+    } else {
+      // Add it
+      updatedOptions = [...group.options, {
         value: size.name,
         sizeId: size.id,
         displayOrder: size.sortOrder,
-      }));
-      updateAttributeGroup(groupIndex, { type, name: 'Size', options });
-    } else {
-      updateAttributeGroup(groupIndex, { type, options: [] });
+      }];
+    }
+    
+    updateAttributeGroup(groupIndex, { options: updatedOptions });
+  };
+
+  const handleQuickCreateColor = async () => {
+    if (!quickCreateColorName || !quickCreateColorHex) {
+      toast.error('Please enter color name and hex code');
+      return;
+    }
+
+    setIsCreatingColor(true);
+    try {
+      const result = await createColor({
+        name: quickCreateColorName,
+        hexCode: quickCreateColorHex,
+      });
+
+      if (result.success && result.data) {
+        toast.success('Color created successfully');
+        // Add to attributes list without page refresh
+        attributes.colors.push({
+          id: result.data.id,
+          name: result.data.name,
+          slug: result.data.slug,
+          hexCode: result.data.hexCode,
+        });
+        // Reset dialog
+        setQuickCreateColorName('');
+        setQuickCreateColorHex('#000000');
+        setShowColorDialog(false);
+        // Force re-render by updating a dummy state
+        setIsCreatingColor(false);
+      } else {
+        toast.error(result.error || 'Failed to create color');
+      }
+    } catch (error) {
+      toast.error('Failed to create color');
+    } finally {
+      setIsCreatingColor(false);
+    }
+  };
+
+  const handleQuickCreateSize = async () => {
+    if (!quickCreateSizeName) {
+      toast.error('Please enter size name');
+      return;
+    }
+
+    setIsCreatingSize(true);
+    try {
+      const result = await createSize({
+        name: quickCreateSizeName,
+        sortOrder: quickCreateSizeOrder,
+      });
+
+      if (result.success && result.data) {
+        toast.success('Size created successfully');
+        // Add to attributes list without page refresh
+        attributes.sizes.push({
+          id: result.data.id,
+          name: result.data.name,
+          slug: result.data.slug,
+          sortOrder: result.data.sortOrder,
+        });
+        // Reset dialog
+        setQuickCreateSizeName('');
+        setQuickCreateSizeOrder(0);
+        setShowSizeDialog(false);
+        // Force re-render by updating a dummy state
+        setIsCreatingSize(false);
+      } else {
+        toast.error(result.error || 'Failed to create size');
+      }
+    } catch (error) {
+      toast.error('Failed to create size');
+    } finally {
+      setIsCreatingSize(false);
     }
   };
 
@@ -342,7 +502,14 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
         watchedPrice || '0',
         baseSKU
       );
+      
+      // Update local state
       setGeneratedVariants(variants);
+      
+      // Sync both attributeGroups and variants to form state
+      form.setValue('attributeGroups', validGroups);
+      form.setValue('variants', variants as any);
+      
       toast.success(`Generated ${variants.length} variant combinations`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to generate variants');
@@ -485,12 +652,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
 
   // ==================== FORM SUBMISSION ====================
 
-  // Debugging: Log watched values
-  console.log('Watched Price:', watchedPrice);
-  console.log('Watched Name:', watchedName);
 
-  // Debugging: Log generated variants
-  console.log('Generated Variants:', generatedVariants);
 
   const onSubmit = async (data: CreateProductInput) => {
     // 🔍 BREAKPOINT 1: Log initial form data
@@ -566,12 +728,12 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
             salePrice: finalSalePrice,
             colorId: variant.colorId || undefined,
             sizeId: variant.sizeId || undefined,
-            genderId: variant.genderId || undefined,
+            genderId: undefined, // Will be inherited from product level if needed
             inStock: variant.inStock || 0,
             backorderable: variant.backorderable || false,
             combinationId: variant.combinationId,
             displayName: variant.displayName,
-            attributeValues: variant.attributeValues,
+            attributes: variant.attributes,
           };
         });
         
@@ -643,6 +805,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
   // ==================== RENDER ====================
 
   return (
+    <>
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pb-12">
       
       {/* Hidden field for productMode */}
@@ -1200,7 +1363,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
                               </div>
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <Label>Options ({group.options.length})</Label>
+                                  <Label>Options ({group.options.length} selected)</Label>
                                   {group.type === 'custom' && (
                                     <Button
                                       type="button"
@@ -1212,11 +1375,93 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
                                     </Button>
                                   )}
                                 </div>
-                                <div className="flex flex-wrap gap-2">
-                                  {group.options.map((option, optionIndex) => (
-                                    <Badge key={optionIndex} variant="secondary" className="flex items-center gap-2">
-                                      {option.value}
-                                      {group.type === 'custom' && (
+
+                                {/* Color type - show color checkboxes */}
+                                {group.type === 'color' && (
+                                  <>
+                                    <div className="flex justify-end mb-2">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setShowColorDialog(true)}
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" /> Add New Color
+                                      </Button>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3 border rounded-lg max-h-60 overflow-y-auto">
+                                    {attributes.colors.map((color) => {
+                                      const isSelected = group.options.some(opt => opt.colorId === color.id);
+                                      return (
+                                        <div key={color.id} className="flex items-center gap-2">
+                                          <input
+                                            type="checkbox"
+                                            id={`color-${groupIndex}-${color.id}`}
+                                            checked={isSelected}
+                                            onChange={() => toggleColorOption(groupIndex, color.id)}
+                                            className="w-4 h-4 rounded border-gray-300"
+                                          />
+                                          <label 
+                                            htmlFor={`color-${groupIndex}-${color.id}`}
+                                            className="flex items-center gap-2 cursor-pointer flex-1"
+                                          >
+                                            <div 
+                                              className="w-5 h-5 rounded border border-gray-300"
+                                              style={{ backgroundColor: color.hexCode }}
+                                            />
+                                            <span className="text-sm">{color.name}</span>
+                                          </label>
+                                        </div>
+                                      );
+                                    })}
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* Size type - show size checkboxes */}
+                                {group.type === 'size' && (
+                                  <>
+                                    <div className="flex justify-end mb-2">
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setShowSizeDialog(true)}
+                                      >
+                                        <Plus className="h-3 w-3 mr-1" /> Add New Size
+                                      </Button>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3 border rounded-lg max-h-60 overflow-y-auto">
+                                    {attributes.sizes.map((size) => {
+                                      const isSelected = group.options.some(opt => opt.sizeId === size.id);
+                                      return (
+                                        <div key={size.id} className="flex items-center gap-2">
+                                          <input
+                                            type="checkbox"
+                                            id={`size-${groupIndex}-${size.id}`}
+                                            checked={isSelected}
+                                            onChange={() => toggleSizeOption(groupIndex, size.id)}
+                                            className="w-4 h-4 rounded border-gray-300"
+                                          />
+                                          <label 
+                                            htmlFor={`size-${groupIndex}-${size.id}`}
+                                            className="cursor-pointer text-sm flex-1"
+                                          >
+                                            {size.name}
+                                          </label>
+                                        </div>
+                                      );
+                                    })}
+                                    </div>
+                                  </>
+                                )}
+
+                                {/* Custom type - show badges */}
+                                {group.type === 'custom' && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {group.options.map((option, optionIndex) => (
+                                      <Badge key={optionIndex} variant="secondary" className="flex items-center gap-2">
+                                        {option.value}
                                         <button
                                           type="button"
                                           onClick={() => removeAttributeOption(groupIndex, optionIndex)}
@@ -1224,10 +1469,22 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
                                         >
                                           <X className="h-3 w-3" />
                                         </button>
-                                      )}
-                                    </Badge>
-                                  ))}
-                                </div>
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Show selected options summary */}
+                                {group.options.length > 0 && group.type !== 'custom' && (
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    <span className="text-xs text-muted-foreground">Selected:</span>
+                                    {group.options.map((option, optionIndex) => (
+                                      <Badge key={optionIndex} variant="outline" className="text-xs">
+                                        {option.value}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             <Button
@@ -1377,5 +1634,137 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
         </Button>
       </div>
     </form>
+
+    {/* Quick Create Color Dialog */}
+    <Dialog open={showColorDialog} onOpenChange={setShowColorDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add New Color</DialogTitle>
+          <DialogDescription>
+            Create a new global color that can be used across all products.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="colorName">Color Name *</Label>
+            <Input
+              id="colorName"
+              placeholder="e.g., Navy Blue"
+              value={quickCreateColorName}
+              onChange={(e) => setQuickCreateColorName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="colorHex">Hex Code *</Label>
+            <div className="flex gap-2">
+              <Input
+                id="colorHex"
+                type="color"
+                value={quickCreateColorHex}
+                onChange={(e) => setQuickCreateColorHex(e.target.value)}
+                className="w-20 h-10 p-1 cursor-pointer"
+              />
+              <Input
+                placeholder="#000000"
+                value={quickCreateColorHex}
+                onChange={(e) => setQuickCreateColorHex(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowColorDialog(false)}
+            disabled={isCreatingColor}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleQuickCreateColor}
+            disabled={isCreatingColor}
+          >
+            {isCreatingColor ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Color
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Quick Create Size Dialog */}
+    <Dialog open={showSizeDialog} onOpenChange={setShowSizeDialog}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add New Size</DialogTitle>
+          <DialogDescription>
+            Create a new global size that can be used across all products.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="sizeName">Size Name *</Label>
+            <Input
+              id="sizeName"
+              placeholder="e.g., XXL"
+              value={quickCreateSizeName}
+              onChange={(e) => setQuickCreateSizeName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sizeOrder">Sort Order</Label>
+            <Input
+              id="sizeOrder"
+              type="number"
+              placeholder="0"
+              value={quickCreateSizeOrder}
+              onChange={(e) => setQuickCreateSizeOrder(parseInt(e.target.value) || 0)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Lower numbers appear first (e.g., 0 for XS, 1 for S, 2 for M)
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowSizeDialog(false)}
+            disabled={isCreatingSize}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleQuickCreateSize}
+            disabled={isCreatingSize}
+          >
+            {isCreatingSize ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Size
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
