@@ -1,5 +1,5 @@
 {
-  "id": "59125b3b-8787-456c-bfcd-ef30c89bc863",
+  "id": "aa41bcea-fbdb-42e3-86a6-1afdbe26deeb",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3739,6 +3739,13 @@
           "notNull": true,
           "default": "'0.3000'"
         },
+        "shipping_fee": {
+          "name": "shipping_fee",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'135.00'"
+        },
         "free_shipping_threshold": {
           "name": "free_shipping_threshold",
           "type": "numeric(10, 2)",
@@ -3888,7 +3895,8 @@
         "stripe",
         "paypal",
         "cod",
-        "bank_transfer"
+        "bank_transfer",
+        "payfast"
       ]
     },
     "public.payment_status": {

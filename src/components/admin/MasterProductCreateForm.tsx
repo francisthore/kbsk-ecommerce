@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -15,6 +16,10 @@ import {
   Plus, X, Save, Loader2, 
   Package, Tags, DollarSign, Trash2, Copy, BarChart3, Image as ImageIcon 
 } from 'lucide-react';
+import { createProductFormResolverSchema } from '@/lib/validations/product';
+import type {
+  CreateProductFormResolverInput,
+} from '@/lib/validations/product';
 
 // Validation & Actions
 import { 
@@ -82,9 +87,83 @@ interface FormAttributesData {
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
+function buildDefaultValues(
+  initialData?: InitialProductData
+): CreateProductInput {
+  if (!initialData) {
+    return {
+      productMode: 'simple',
+      name: '',
+      slug: '',
+      description: '',
+      productType: 'tool',
+      categoryIds: [],
+      brandId: undefined,
+      genderId: undefined,
+      specs: {},
+      images: [],
+      variants: [
+        {
+          variantType: 'simple',
+          sku: '',
+          price: '0',
+          salePrice: undefined,
+          inStock: 0,
+          backorderable: false,
+        },
+      ],
+      isPublished: false,
+      isBundle: false,
+      hazmat: false,
+      unNumber: undefined,
+      seoMetaTitle: undefined,
+      seoMetaDescription: undefined,
+    };
+  }
+
+  const productMode = initialData.productMode ?? 'simple';
+
+  return {
+    ...initialData,
+    productMode,
+    specs: initialData.specs ?? {},
+    images: initialData.images ?? [],
+    variants:
+      productMode === 'variable'
+        ? initialData.variants ?? []
+        : initialData.variants?.slice(0, 1) ?? [
+            {
+              variantType: 'simple',
+              sku: '',
+              price: '0',
+              salePrice: undefined,
+              inStock: 0,
+              backorderable: false,
+            },
+          ],
+  } as CreateProductInput;
+}
+
+export type ProductMode = 'simple' | 'variable';
+
+export interface InitialProductData {
+  id?: string;
+  productMode?: ProductMode;
+  attributeGroups?: AttributeGroup[];
+  variants?: CreateProductInput['variants'];
+  specs?: Record<string, string>;
+  images?: Array<{
+    id?: string;
+    url: string;
+    displayOrder: number;
+    isPrimary: boolean;
+    altText?: string;
+  }>;
+}
+
 interface Props {
   attributes: FormAttributesData;
-  initialData?: any; // Optional initial data for edit mode
+  initialData?: InitialProductData; // Optional initial data for edit mode
   mode?: 'create' | 'edit'; // Form mode
 }
 
@@ -101,8 +180,10 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
   const [attributeGroups, setAttributeGroups] = useState<AttributeGroup[]>(initialData?.attributeGroups || []);
   
   // Generated variants
-  const [generatedVariants, setGeneratedVariants] = useState<any[]>(initialData?.variants || []);
-  
+  type FormVariant = CreateProductInput['variants'][number];
+
+  const [generatedVariants, setGeneratedVariants] =
+    useState<FormVariant[]>(initialData?.variants ?? []);  
   // Specs (key-value pairs)
   const [specs, setSpecs] = useState<Record<string, string>>(initialData?.specs || {});
   const [newSpecKey, setNewSpecKey] = useState('');
@@ -135,35 +216,10 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
   }>>(initialData?.images || []);
 
   // Form setup
-  const form = useForm<CreateProductInput>({
-    resolver: zodResolver(createProductFormSchema),
-    defaultValues: initialData || {
-      productMode: 'simple',
-      name: '',
-      slug: '',
-      description: '',
-      productType: 'tool',
-      categoryIds: [],
-      brandId: undefined,
-      genderId: undefined,
-      specs: {},
-      images: [],
-      variants: [{
-        variantType: 'simple',
-        sku: '',
-        price: '0',
-        salePrice: undefined,
-        inStock: 0,
-        backorderable: false,
-      }],
-      isPublished: false,
-      isBundle: false,
-      hazmat: false,
-      unNumber: undefined,
-      seoMetaTitle: undefined,
-      seoMetaDescription: undefined,
-    },
-  });
+  const form = useForm<CreateProductFormResolverInput>({
+  resolver: zodResolver(createProductFormResolverSchema),
+  defaultValues: buildDefaultValues(initialData),
+});
 
   // Watch form values
   const watchedPrice = form.watch('variants.0.price');
@@ -190,7 +246,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
       if (initialData.productMode === 'variable' && initialData.variants) {
         setGeneratedVariants(initialData.variants);
         // Also sync to form state so they appear in the table
-        form.setValue('variants', initialData.variants as any);
+        form.setValue('variants', initialData.variants);
         form.setValue('attributeGroups', initialData.attributeGroups || []);
       }
       
@@ -508,7 +564,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
       
       // Sync both attributeGroups and variants to form state
       form.setValue('attributeGroups', validGroups);
-      form.setValue('variants', variants as any);
+      form.setValue('variants', variants);
       
       toast.success(`Generated ${variants.length} variant combinations`);
     } catch (error) {
@@ -518,7 +574,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
 
   // ==================== VARIANT TABLE OPERATIONS ====================
 
-  const updateVariant = (index: number, updates: Partial<any>) => {
+  const updateVariant = (index: number, updates: Partial<Record<string, unknown>>) => {
     const updated = [...generatedVariants];
     updated[index] = { ...updated[index], ...updates };
     setGeneratedVariants(updated);
@@ -878,7 +934,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
               <Label htmlFor="productType">Product Type *</Label>
               <Select
                 value={form.watch('productType')}
-                onValueChange={(value) => form.setValue('productType', value as any)}
+                onValueChange={(value) => form.setValue('productType', value as 'tool' | 'accessory' | 'consumable' | 'ppe')}
               >
                 <SelectTrigger id="productType">
                   <SelectValue />

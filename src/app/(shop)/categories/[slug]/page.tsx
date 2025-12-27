@@ -5,9 +5,14 @@ import { notFound } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { getProductsByCategory } from '@/lib/db/queries/products';
 
-export default async function CategoryPage({ params, searchParams }: any) {
-  let { segments } = params;
-  const { page = '1', pageSize = '12', sort = 'newest' } = searchParams || {};
+export default async function CategoryPage({ params, searchParams }: {
+  params: Promise<{ segments: string | string[] }>;
+  searchParams?: Promise<{ page?: string; pageSize?: string; sort?: string }>;
+}) {
+  const { segments: segmentsParam } = await params;
+  let segments = segmentsParam;
+  const searchParamsResolved = await searchParams;
+  const { page = '1', pageSize = '12', sort = 'newest' } = searchParamsResolved || {};
 
   if (!Array.isArray(segments)) segments = [segments];
 
@@ -27,13 +32,17 @@ export default async function CategoryPage({ params, searchParams }: any) {
   const pageNum = Number(page) || 1;
   const pageSizeNum = Number(pageSize) || 12;
 
-  const { items, total } = await getProductsByCategory(parentId as string, pageNum, pageSizeNum, sort);
+  const { items } = await getProductsByCategory(segments.join('/'), { 
+    page: pageNum, 
+    pageSize: pageSizeNum, 
+    sort: sort as 'newest' | 'oldest' | 'price_asc' | 'price_desc'
+  });
 
   return (
     <div className="mx-auto w-[90%] px-4 py-8">
       <h1 className="text-heading-2 mb-8 text-dark-900">Category: {segments.join(' > ')}</h1>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((product: any) => (
+        {items.map((product) => (
           <ProductCard 
             key={product.id} 
             title={product.name} 

@@ -3,7 +3,7 @@
  * Used as fallback when database has no settings
  */
 export const DEFAULT_SETTINGS = {
-  shopName: 'KBSK E-commerce',
+  shopName: 'KBSK Trading Enterprises E-commerce',
   shopCountry: 'South Africa',
   shopTimezone: 'Africa/Johannesburg',
   currencyCode: 'ZAR',
@@ -11,7 +11,8 @@ export const DEFAULT_SETTINGS = {
   currencyLocale: 'en-ZA',
   taxRate: '0.1500',
   markupRate: '0.3000',
-  freeShippingThreshold: '500.00',
+  shippingFee: '135.00',
+  freeShippingThreshold: '3000.00',
   enableGuestCheckout: true,
   enableWishlist: true,
   enableReviews: true,

@@ -268,7 +268,7 @@ function ColorDialog({
     const validation = colorSchema.safeParse(formData);
     if (!validation.success) {
       const fieldErrors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
+      validation.error.issues.forEach((err) => {
         if (err.path[0]) {
           fieldErrors[err.path[0].toString()] = err.message;
         }
@@ -526,7 +526,7 @@ function SizeDialog({
     const validation = sizeSchema.safeParse(formData);
     if (!validation.success) {
       const fieldErrors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
+      validation.error.issues.forEach((err) => {
         if (err.path[0]) {
           fieldErrors[err.path[0].toString()] = err.message;
         }
@@ -776,7 +776,7 @@ function GenderDialog({
     const validation = genderSchema.safeParse(formData);
     if (!validation.success) {
       const fieldErrors: Record<string, string> = {};
-      validation.error.errors.forEach((err) => {
+      validation.error.issues.forEach((err) => {
         if (err.path[0]) {
           fieldErrors[err.path[0].toString()] = err.message;
         }

@@ -7,12 +7,9 @@ import {
   carts,
   cartItems,
   productVariants,
-  products,
   productImages,
   guests,
-  brands,
-  colors,
-  sizes,
+  // removed unused schema exports: products, brands, colors, sizes
 } from "@/lib/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
@@ -25,6 +22,7 @@ import {
   estimateShipping as utilEstimateShipping,
 } from "@/lib/utils/cart";
 import { CartItemData } from "@/store/cart.store";
+import { getShopSettings } from "./shop-settings";
 
 // Helper: Get or create guest session
 async function getOrCreateGuestSession() {
@@ -298,6 +296,14 @@ export async function clearCart() {
 
 export async function getCart() {
   try {
+    // Fetch shop settings for free shipping threshold
+    const shopSettingsResult = await getShopSettings();
+    const freeShippingThreshold = shopSettingsResult.success && shopSettingsResult.data?.freeShippingThreshold 
+      ? (typeof shopSettingsResult.data.freeShippingThreshold === 'number' 
+          ? shopSettingsResult.data.freeShippingThreshold 
+          : parseFloat(shopSettingsResult.data.freeShippingThreshold))
+      : 1000;
+
     const { cartId } = await getOrCreateCart();
     console.log('🛒 getCart - cartId:', cartId);
 
@@ -335,7 +341,7 @@ export async function getCart() {
         items: [],
         totals: { subtotal: 0, savings: 0, total: 0 },
         itemCount: 0,
-        freeShipping: { eligible: false, threshold: 1000, amountRemaining: 1000 },
+        freeShipping: { eligible: false, threshold: freeShippingThreshold, amountRemaining: freeShippingThreshold },
       };
     }
 
@@ -356,9 +362,9 @@ export async function getCart() {
       quantity: item.quantity,
       inStock: item.variant.inStock,
       image: item.variant.product.images?.[0]?.url || null,
-      colorName: item.variant.color?.label || null,
-      colorHex: item.variant.color?.hex || null,
-      sizeName: item.variant.size?.label || null,
+      colorName: item.variant.color?.name || null,
+      colorHex: item.variant.color?.hexCode || null,
+      sizeName: item.variant.size?.name || null,
       isSupplierWarehouse: false, // TODO: Add when available in schema
     }));
 
@@ -371,7 +377,7 @@ export async function getCart() {
     const itemCount = calculateItemCount(cartItemsData);
     console.log('🛒 getCart - itemCount:', itemCount);
     
-    const freeShipping = isFreeShippingEligible(totals.total);
+    const freeShipping = isFreeShippingEligible(totals.total, freeShippingThreshold);
     console.log('🛒 getCart - freeShipping:', freeShipping);
 
     const result = {
@@ -387,11 +393,20 @@ export async function getCart() {
   } catch (error) {
     console.error("Get cart error:", error);
     console.error("Get cart error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Fetch threshold for error case too
+    const shopSettingsResult = await getShopSettings();
+    const freeShippingThreshold = shopSettingsResult.success && shopSettingsResult.data?.freeShippingThreshold 
+      ? (typeof shopSettingsResult.data.freeShippingThreshold === 'number' 
+          ? shopSettingsResult.data.freeShippingThreshold 
+          : parseFloat(shopSettingsResult.data.freeShippingThreshold))
+      : 1000;
+    
     return {
       items: [],
       totals: { subtotal: 0, savings: 0, total: 0 },
       itemCount: 0,
-      freeShipping: { eligible: false, threshold: 1000, amountRemaining: 1000 },
+      freeShipping: { eligible: false, threshold: freeShippingThreshold, amountRemaining: freeShippingThreshold },
     };
   }
 }
@@ -524,9 +539,9 @@ export async function estimateShipping(params: {
 // SAVE ORDER INSTRUCTIONS
 // ============================================================================
 
-export async function saveOrderInstructions(instructions: string) {
+export async function saveOrderInstructions(_instructions: string) {
   try {
-    const { cartId } = await getOrCreateCart();
+    await getOrCreateCart();
 
     // TODO: Add orderInstructions field to carts table schema
     // For now, this is a placeholder that validates the action

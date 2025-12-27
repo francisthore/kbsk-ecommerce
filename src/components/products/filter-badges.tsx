@@ -2,9 +2,38 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
-export function FilterBadges({ filters, availableFilters }: any) {
+interface FilterOption {
+  id: string;
+  name: string;
+}
+
+interface GenderOption {
+  id: string;
+  label: string;
+  slug: string;
+}
+
+interface AvailableFilters {
+  categories: FilterOption[];
+  brands: FilterOption[];
+  colors: FilterOption[];
+  sizes: FilterOption[];
+  genders: GenderOption[];
+}
+
+interface Filters {
+  categoryIds?: string[];
+  brandIds?: string[];
+  colorIds?: string[];
+  sizeIds?: string[];
+  genderIds?: string[];
+}
+
+export function FilterBadges({ filters, availableFilters }: {
+  filters: Filters;
+  availableFilters: AvailableFilters;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -12,31 +41,31 @@ export function FilterBadges({ filters, availableFilters }: any) {
 
   // Categories
   filters.categoryIds?.forEach((id: string) => {
-    const cat = availableFilters.categories.find((c: any) => c.id === id);
+    const cat = availableFilters.categories.find((c) => c.id === id);
     if (cat) badges.push({ label: cat.name, key: "category", value: id });
   });
 
   // Brands
   filters.brandIds?.forEach((id: string) => {
-    const brand = availableFilters.brands.find((b: any) => b.id === id);
+    const brand = availableFilters.brands.find((b) => b.id === id);
     if (brand) badges.push({ label: brand.name, key: "brand", value: id });
   });
 
   // Colors
   filters.colorIds?.forEach((id: string) => {
-    const color = availableFilters.colors.find((c: any) => c.id === id);
+    const color = availableFilters.colors.find((c) => c.id === id);
     if (color) badges.push({ label: color.name, key: "color", value: id });
   });
 
   // Sizes
   filters.sizeIds?.forEach((id: string) => {
-    const size = availableFilters.sizes.find((s: any) => s.id === id);
+    const size = availableFilters.sizes.find((s) => s.id === id);
     if (size) badges.push({ label: `Size: ${size.name}`, key: "size", value: id });
   });
 
   // Genders
   filters.genderIds?.forEach((id: string) => {
-    const gender = availableFilters.genders.find((g: any) => g.id === id);
+    const gender = availableFilters.genders.find((g) => g.id === id);
     if (gender) badges.push({ label: gender.label, key: "gender", value: id });
   });
 

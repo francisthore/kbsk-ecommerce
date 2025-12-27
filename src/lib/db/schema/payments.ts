@@ -23,11 +23,11 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 
 export const insertPaymentSchema = z.object({
   orderId: z.string().uuid(),
-  method: z.enum(['stripe', 'paypal', 'cod', 'bank_transfer']),
+  method: z.enum(['stripe', 'paypal', 'cod', 'bank_transfer', 'payfast']),
   status: z.enum(['initiated', 'completed', 'failed', 'refunded']).optional(),
   paidAt: z.date().optional().nullable(),
   transactionId: z.string().optional().nullable(),
-  meta: z.record(z.any()).optional().nullable(),
+  meta: z.record(z.string(), z.any()).optional().nullable(),
 });
 
 export const selectPaymentSchema = insertPaymentSchema.extend({

@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { Edit, Trash2 } from 'lucide-react';
-import { formatPrice } from '@/lib/utils/product';
+import { formatProductPrice } from '@/lib/utils/product';
 
 interface Product {
   id: string;
@@ -80,7 +79,7 @@ export default function ProductsTable({ products }: ProductsTableProps) {
                 {product.brand?.name || '—'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
-                {product.variants[0] ? formatPrice(product.variants[0].price) : '—'}
+                {product.variants[0] ? formatProductPrice(product.variants[0].price) : '—'}
               </td>
               <td className="px-6 py-4 text-sm text-gray-900">
                 {product.variants[0]?.inStock || 0}

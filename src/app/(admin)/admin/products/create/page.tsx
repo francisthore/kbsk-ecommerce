@@ -28,7 +28,13 @@ export default async function CreateProductPage() {
         </p>
       </div>
 
-      <MasterProductCreateForm attributes={attributesResult.data} />
+      <MasterProductCreateForm attributes={{
+        brands: attributesResult.data?.brands || [],
+        categories: attributesResult.data?.categories || [],
+        colors: attributesResult.data?.colors || [],
+        sizes: attributesResult.data?.sizes || [],
+        genders: attributesResult.data?.genders || [],
+      }} />
     </div>
   );
 }

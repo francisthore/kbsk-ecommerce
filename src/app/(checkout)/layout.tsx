@@ -1,16 +1,16 @@
+import CheckoutHeaderWrapper from "./CheckoutHeaderWrapper";
+
 export default function CheckoutLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Minimal checkout layout - no header/footer distractions */}
-      <div className="mx-auto w-[90%] py-8">
-        <div className="max-w-4xl mx-auto">
-          {children}
-        </div>
-      </div>
+    <div className="min-h-screen bg-white flex flex-col">
+      <CheckoutHeaderWrapper />
+      <main className="flex-1">
+        {children}
+      </main>
     </div>
   );
 }

@@ -12,9 +12,9 @@ import {
   BarChart3,
   Tags,
   FolderTree,
-  LogOut,
   Palette,
 } from 'lucide-react';
+import SignOutButton from './SignOutButton';
 
 interface AdminSidebarProps {
   user: {
@@ -129,13 +129,7 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
               </div>
             </div>
-            <Link
-              href="/api/auth/sign-out"
-              className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </Link>
+            <SignOutButton className="mt-3 w-full" />
           </div>
         </div>
       </aside>

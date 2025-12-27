@@ -21,7 +21,7 @@ export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'shipp
 export const paymentTermEnum = pgEnum('payment_term', ['prepaid', '30d', '60d']);
 
 // Payment-related enums
-export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'paypal', 'cod', 'bank_transfer']);
+export const paymentMethodEnum = pgEnum('payment_method', ['stripe', 'paypal', 'cod', 'bank_transfer', 'payfast']);
 export const paymentStatusEnum = pgEnum('payment_status', ['initiated', 'completed', 'failed', 'refunded']);
 
 // Quote-related enums

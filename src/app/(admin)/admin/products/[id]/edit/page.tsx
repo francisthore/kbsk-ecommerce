@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getFormAttributes, getProductForEdit } from '@/lib/actions/product';
 import MasterProductCreateForm from '@/components/admin/MasterProductCreateForm';
+import type { InitialProductData } from '@/components/admin/MasterProductCreateForm';
 
 export const metadata = {
   title: 'Edit Product | Admin Dashboard',
@@ -15,7 +16,7 @@ interface PageProps {
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = await params;
-  
+
   const [attributesResult, productResult] = await Promise.all([
     getFormAttributes(),
     getProductForEdit(id),
@@ -35,6 +36,25 @@ export default async function EditProductPage({ params }: PageProps) {
     notFound();
   }
 
+
+
+  const product = productResult.data;
+
+  const productMode =
+    product.productMode === 'variable' ? 'variable' : 'simple';
+
+  const normalizedVariants =
+    productMode === 'variable'
+      ? product.variants.filter(v => v.variantType === 'variable')
+      : product.variants.filter(v => v.variantType === 'simple');
+
+  const normalizedProduct: InitialProductData = {
+    ...product,
+    productMode,
+    variants: normalizedVariants,
+    specs: (product.specs as Record<string, string>) ?? {},
+  };
+
   return (
     <div className="mx-auto max-w-7xl p-6">
       <div className="mb-8">
@@ -47,9 +67,15 @@ export default async function EditProductPage({ params }: PageProps) {
         </p>
       </div>
 
-      <MasterProductCreateForm 
-        attributes={attributesResult.data} 
-        initialData={productResult.data}
+      <MasterProductCreateForm
+        attributes={{
+          brands: attributesResult.data?.brands || [],
+          categories: attributesResult.data?.categories || [],
+          colors: attributesResult.data?.colors || [],
+          sizes: attributesResult.data?.sizes || [],
+          genders: attributesResult.data?.genders || [],
+        }}
+        initialData={normalizedProduct}
         mode="edit"
       />
     </div>

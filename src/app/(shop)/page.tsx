@@ -88,7 +88,7 @@ const Home = async () => {
             </Button>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {featuredProducts.map((product) => (
+            {(featuredProducts as unknown as Array<{ id: string; name: string; description?: string | null; image?: { url: string } | null; minPrice: number; maxPrice: number; onSale: boolean; inStock: boolean; slug: string; colorCount: number; sizeCount: number }>).map((product) => (
               <ProductCard
                 key={product.id}
                 title={product.name}

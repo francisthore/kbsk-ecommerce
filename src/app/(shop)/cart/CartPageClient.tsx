@@ -124,7 +124,7 @@ export default function CartPageClient({ initialCartData }: CartPageClientProps)
             {/* Secure Payments Badge */}
             <div className="mt-6 flex items-center justify-center gap-2 text-caption text-[var(--color-text-secondary)]">
               <Lock className="h-4 w-4" />
-              <span>100% Secure Payments</span>
+              
             </div>
           </div>
         </div>

@@ -102,7 +102,7 @@ export const OrderConfirmationEmail = ({
                     <Text style={quantityText}>Qty: {item.quantity}</Text>
                   </Column>
                   <Column style={itemPrice}>
-                    <Text style={priceText}>${item.priceAtPurchase}</Text>
+                    <Text style={priceText}>R{item.priceAtPurchase}</Text>
                   </Column>
                 </Row>
               </Section>
@@ -116,7 +116,7 @@ export const OrderConfirmationEmail = ({
                   <Text style={totalText}>Subtotal:</Text>
                 </Column>
                 <Column style={totalValue}>
-                  <Text style={totalText}>${subtotal}</Text>
+                  <Text style={totalText}>R{subtotal}</Text>
                 </Column>
               </Row>
               
@@ -125,7 +125,7 @@ export const OrderConfirmationEmail = ({
                   <Text style={totalText}>Shipping:</Text>
                 </Column>
                 <Column style={totalValue}>
-                  <Text style={totalText}>${shippingCost}</Text>
+                  <Text style={totalText}>R{shippingCost}</Text>
                 </Column>
               </Row>
               
@@ -134,7 +134,7 @@ export const OrderConfirmationEmail = ({
                   <Text style={totalText}>Tax:</Text>
                 </Column>
                 <Column style={totalValue}>
-                  <Text style={totalText}>${taxTotal}</Text>
+                  <Text style={totalText}>R{taxTotal}</Text>
                 </Column>
               </Row>
               
@@ -145,7 +145,7 @@ export const OrderConfirmationEmail = ({
                   <Text style={grandTotalText}>Total:</Text>
                 </Column>
                 <Column style={totalValue}>
-                  <Text style={grandTotalText}>${totalAmount}</Text>
+                  <Text style={grandTotalText}>R{totalAmount}</Text>
                 </Column>
               </Row>
             </Section>

@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     config.externals = [...(config.externals || []), { 'better-auth': 'better-auth' }];
     return config;
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

@@ -55,11 +55,12 @@ export default function VerifyEmailPage() {
           setStatus("error");
         } else {
           setStatus("success");
-          toast.success("Email verified successfully! Redirecting...");
-          // Redirect to home after 2 seconds to show success state
+          toast.success("Email verified successfully! You are now logged in.");
+          // Refresh to update auth state, then redirect
+          router.refresh();
           setTimeout(() => {
             router.push("/");
-          }, 2000);
+          }, 1500);
         }
       } catch (error) {
         console.error("Email verification error:", error);

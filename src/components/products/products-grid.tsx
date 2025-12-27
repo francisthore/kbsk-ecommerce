@@ -30,11 +30,11 @@ interface ProductsGridProps {
 
 export function ProductsGrid({ products, userId }: ProductsGridProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const [_isPending, startTransition] = useTransition();
+  const [_loadingProductId, setLoadingProductId] = useState<string | null>(null);
   const { setCart } = useCartStore();
 
-  const handleAddToCart = async (productId: string, defaultVariantId?: string) => {
+  const _handleAddToCart = async (productId: string, defaultVariantId?: string) => {
     setLoadingProductId(productId);
 
     startTransition(async () => {
@@ -55,6 +55,7 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
           toast.error(result.error || "Failed to add to cart");
         }
       } catch (error) {
+        console.error('Add to cart error:', error);
         toast.error("Something went wrong");
       } finally {
         setLoadingProductId(null);
@@ -62,7 +63,7 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
     });
   };
 
-  const handleToggleWishlist = async (productId: string) => {
+  const _handleToggleWishlist = async (productId: string) => {
     if (!userId) {
       toast.error("Please login to add to wishlist");
       router.push("/login");

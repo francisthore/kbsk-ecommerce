@@ -100,7 +100,7 @@ export async function getProducts(
   }
 
   if (filters.productTypes?.length) {
-    conditions.push(inArray(products.productType, filters.productTypes as any));
+    conditions.push(inArray(products.productType, filters.productTypes as Array<'ppe' | 'shoes' | 'clothing' | 'accessories'>));
   }
 
   if (filters.hazmat !== undefined) {
@@ -853,7 +853,7 @@ export async function searchProducts(
 // HELPER: ENRICH PRODUCTS
 // ============================================================================
 
-async function enrichProductsWithMetadata(prods: any[]) {
+async function enrichProductsWithMetadata(prods: Array<Record<string, unknown>>) {
   if (!prods.length) return [];
 
   const ids = prods.map((p) => p.id);

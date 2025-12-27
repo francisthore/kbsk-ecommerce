@@ -23,6 +23,7 @@ export const shopSettings = pgTable('shop_settings', {
   markupRate: numeric('markup_rate', { precision: 5, scale: 4 }).notNull().default('0.3000'), // 30% markup
   
   // Shipping
+  shippingFee: numeric('shipping_fee', { precision: 10, scale: 2 }).notNull().default('135.00'), // R135.00 default
   freeShippingThreshold: numeric('free_shipping_threshold', { precision: 10, scale: 2 }).notNull().default('500.00'),
   
   // Business Information
@@ -60,6 +61,7 @@ export const updateShopSettingsSchema = z.object({
   markupRate: z.number().min(0).max(5, 'Markup rate must be between 0 and 5').optional(),
   
   // Shipping
+  shippingFee: z.number().min(0, 'Shipping fee must be positive').optional(),
   freeShippingThreshold: z.number().min(0, 'Threshold must be positive').optional(),
   
   // Business Information

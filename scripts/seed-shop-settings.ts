@@ -86,6 +86,7 @@ async function displaySettings() {
   console.log(`💰 Currency:            ${settings.currencySymbol} ${settings.currencyCode} (${settings.currencyLocale})`);
   console.log(`📊 VAT Rate:            ${(parseFloat(settings.taxRate) * 100).toFixed(2)}%`);
   console.log(`📈 Markup Rate:         ${(parseFloat(settings.markupRate) * 100).toFixed(2)}%`);
+  console.log(`🚚 Shipping Fee:        ${settings.currencySymbol}${settings.shippingFee}`);
   console.log(`🚚 Free Shipping:       ${settings.currencySymbol}${settings.freeShippingThreshold}`);
   console.log('');
   console.log(`📧 Business Email:      ${settings.businessEmail || 'Not set'}`);

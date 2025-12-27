@@ -150,6 +150,16 @@ export const updateProductFormSchema = z.union([
   variableProductSchema.partial().extend({ id: z.string().uuid() }),
 ]);
 
+
+/**
+ * Resolver-safe schema for react-hook-form
+ * (Workaround for discriminatedUnion resolver typing issue)
+ */
+export const createProductFormResolverSchema =
+  z.union([simpleProductSchema, variableProductSchema]);
+
+
+
 // ==================== TYPE EXPORTS ====================
 
 export type ProductImageInput = z.infer<typeof productImageSchema>;
@@ -161,6 +171,7 @@ export type VariableVariant = z.infer<typeof variableVariantSchema>;
 export type ProductSpecsInput = z.infer<typeof productSpecsSchema>;
 export type CreateProductInput = z.infer<typeof createProductFormSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductFormSchema>;
+export type CreateProductFormResolverInput = z.infer<typeof createProductFormResolverSchema>;
 
 // Legacy exports
 export type ProductVariantInput = SimpleVariant | VariableVariant;

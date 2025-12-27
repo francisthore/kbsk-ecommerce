@@ -57,7 +57,7 @@ export default function ProductClient({
   recommendedProducts,
 }: ProductClientProps) {
   // Use Zustand store for variant selection (persists across navigation)
-  const variantIndex = useVariantStore((state) => state.getSelected(product.id, 0));
+  // const _variantIndex = useVariantStore((state) => state.getSelected(product.id, 0));
   const setVariantIndex = useVariantStore((state) => state.setSelected);
   
   const [selectedColorId, setSelectedColorId] = useState<string | undefined>();

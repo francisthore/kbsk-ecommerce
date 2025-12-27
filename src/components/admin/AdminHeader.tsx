@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bell, Menu, Search, User } from "lucide-react";
 import { useState } from "react";
+import SignOutButton from "./SignOutButton";
 
 interface AdminHeaderProps {
   user?: {
@@ -137,13 +138,9 @@ export default function AdminHeader({ user, onMenuClick }: AdminHeaderProps) {
                     >
                       View Store
                     </Link>
-                    <Link
-                      href="/api/auth/sign-out"
-                      className="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                      onClick={() => setShowUserMenu(false)}
-                    >
-                      Sign Out
-                    </Link>
+                    <div onClick={() => setShowUserMenu(false)}>
+                      <SignOutButton variant="dropdown" showIcon={false} />
+                    </div>
                   </div>
                 </div>
               </>

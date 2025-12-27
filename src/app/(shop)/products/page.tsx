@@ -8,7 +8,6 @@ import {
   ProductsGridSkeleton,
 } from "@/components/products";
 import { getProducts } from "@/lib/db/queries/products";
-import { db } from "@/lib/db";
 import type { ProductFilters } from "@/lib/db/queries/products";
 
 // Make this configurable
@@ -71,7 +70,8 @@ export default async function ProductsPage({
   };
 
   const page = params.page ? parseInt(params.page) : 1;
-  const sort = (params.sort as any) || "newest";
+  const sortParam = (params.sort as "newest" | "oldest" | "price-asc" | "price-desc" | undefined) || "newest";
+  const sort = sortParam.replace(/-/g, "_") as "newest" | "oldest" | "price_asc" | "price_desc";
 
   // Fetch products
   const { items: products, total, filters: availableFilters } = await getProducts(

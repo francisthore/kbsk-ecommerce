@@ -1,5 +1,6 @@
 import { getShopSettings } from '@/lib/actions/shop-settings';
 import ShopSettingsForm from '@/components/admin/ShopSettingsForm';
+import type { ShopSettings } from '@/lib/db/schema';
 
 export const metadata = {
   title: 'Shop Settings | Admin Dashboard',
@@ -25,7 +26,7 @@ export default async function ShopSettingsPage() {
         )}
       </div>
 
-      <ShopSettingsForm initialData={settingsResult.data} />
+      <ShopSettingsForm initialData={settingsResult.data as Partial<ShopSettings>} />
     </div>
   );
 }

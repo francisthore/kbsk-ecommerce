@@ -116,7 +116,7 @@ export async function signIn(formData: FormData) {
   });
 
   await migrateGuestToUser();
-  return { ok: true, userId: res.user?.id };
+  return { ok: true, user: res.user };
 }
 
 export async function getCurrentUser() {
@@ -134,8 +134,15 @@ export async function getCurrentUser() {
 }
 
 export async function signOut() {
-  await auth.api.signOut({ headers: {} });
-  return { ok: true };
+  try {
+    await auth.api.signOut({
+      headers: await headers(),
+    });
+    return { ok: true };
+  } catch (error) {
+    console.error('Sign out error:', error);
+    return { ok: false, error: 'Failed to sign out' };
+  }
 }
 
 export async function mergeGuestCartWithUserCart() {

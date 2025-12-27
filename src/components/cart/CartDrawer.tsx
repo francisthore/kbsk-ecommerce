@@ -64,7 +64,7 @@ export default function CartDrawer() {
 
       {/* Drawer */}
       <div
-        className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl transition-transform sm:w-[400px]"
+        className="fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl transition-transform sm:w-[520px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"

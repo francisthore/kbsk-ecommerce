@@ -11,10 +11,11 @@ export default function RootLayoutClient({
 }) {
   const pathname = usePathname();
   
-  // Don't render main Navbar/Footer for admin routes
+  // Don't render main Navbar/Footer for admin and checkout routes
   const isAdminRoute = pathname?.startsWith("/admin");
+  const isCheckoutRoute = pathname?.startsWith("/checkout");
 
-  if (isAdminRoute) {
+  if (isAdminRoute || isCheckoutRoute) {
     return <>{children}</>;
   }
 

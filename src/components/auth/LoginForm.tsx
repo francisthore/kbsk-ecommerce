@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { signIn as authSignIn } from "@/lib/auth/actions";
 import { validateEmail } from "@/lib/utils/validation";
 import OAuthButtons from "./OAuthButtons";
+import { mergeGuestCartToUser } from "@/lib/actions/cart";
+import { authClient } from "@/lib/auth/client";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -55,7 +57,17 @@ export default function LoginForm() {
 
       if (result?.ok) {
         toast.success("Welcome back!");
+        
+        // Merge guest cart if exists
+        if (result.user?.id) {
+          await mergeGuestCartToUser(result.user.id);
+        }
+        
+        // Manually refresh session to update useSession hook immediately
+        await authClient.$fetch("/api/auth/get-session");
+        
         router.push(redirectTo);
+        router.refresh();
       } else {
         toast.error("Invalid email or password");
       }

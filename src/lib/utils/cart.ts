@@ -35,13 +35,13 @@ export function calculateCartTotals(items: CartItemData[]): CartTotals {
 /**
  * Check if cart is eligible for free shipping
  */
-export function isFreeShippingEligible(total: number): FreeShippingInfo {
-  const eligible = total >= FREE_SHIPPING_THRESHOLD;
-  const amountRemaining = eligible ? 0 : FREE_SHIPPING_THRESHOLD - total;
+export function isFreeShippingEligible(total: number, threshold: number = FREE_SHIPPING_THRESHOLD): FreeShippingInfo {
+  const eligible = total >= threshold;
+  const amountRemaining = eligible ? 0 : threshold - total;
 
   return {
     eligible,
-    threshold: FREE_SHIPPING_THRESHOLD,
+    threshold,
     amountRemaining,
   };
 }

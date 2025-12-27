@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { brands, categories, colors, sizes, genders, products, productToCategories } from "@/lib/db/schema";
-import { eq, sql, isNull, desc } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -87,9 +87,9 @@ export async function createBrand(data: {
 
     revalidatePath("/admin/brands");
     return { success: true, data: newBrand };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating brand:", error);
-    return { success: false, error: error.message || "Failed to create brand" };
+    return { success: false, error: error instanceof Error ? error instanceof Error ? error.message : "Unknown error" : "Failed to create brand" };
   }
 }
 
@@ -133,9 +133,9 @@ export async function updateBrand(
 
     revalidatePath("/admin/brands");
     return { success: true, data: updatedBrand };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating brand:", error);
-    return { success: false, error: error.message || "Failed to update brand" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update brand" };
   }
 }
 
@@ -160,9 +160,9 @@ export async function deleteBrand(id: string) {
 
     revalidatePath("/admin/brands");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting brand:", error);
-    return { success: false, error: error.message || "Failed to delete brand" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete brand" };
   }
 }
 
@@ -246,11 +246,11 @@ export async function createCategory(data: {
 
     revalidatePath("/admin/categories");
     return { success: true, data: newCategory };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating category:", error);
     return {
       success: false,
-      error: error.message || "Failed to create category",
+      error: error instanceof Error ? error.message : "Failed to create category",
     };
   }
 }
@@ -311,11 +311,11 @@ export async function updateCategory(
 
     revalidatePath("/admin/categories");
     return { success: true, data: updatedCategory };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating category:", error);
     return {
       success: false,
-      error: error.message || "Failed to update category",
+      error: error instanceof Error ? error.message : "Failed to update category",
     };
   }
 }
@@ -354,11 +354,11 @@ export async function deleteCategory(id: string) {
 
     revalidatePath("/admin/categories");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting category:", error);
     return {
       success: false,
-      error: error.message || "Failed to delete category",
+      error: error instanceof Error ? error.message : "Failed to delete category",
     };
   }
 }
@@ -409,9 +409,9 @@ export async function createColor(data: {
 
     revalidatePath("/admin/attributes");
     return { success: true, data: newColor };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating color:", error);
-    return { success: false, error: error.message || "Failed to create color" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create color" };
   }
 }
 
@@ -452,9 +452,9 @@ export async function updateColor(
 
     revalidatePath("/admin/attributes");
     return { success: true, data: updatedColor };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating color:", error);
-    return { success: false, error: error.message || "Failed to update color" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update color" };
   }
 }
 
@@ -466,9 +466,9 @@ export async function deleteColor(id: string) {
 
     revalidatePath("/admin/attributes");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting color:", error);
-    return { success: false, error: error.message || "Failed to delete color" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete color" };
   }
 }
 
@@ -518,9 +518,9 @@ export async function createSize(data: {
 
     revalidatePath("/admin/attributes");
     return { success: true, data: newSize };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating size:", error);
-    return { success: false, error: error.message || "Failed to create size" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to create size" };
   }
 }
 
@@ -561,9 +561,9 @@ export async function updateSize(
 
     revalidatePath("/admin/attributes");
     return { success: true, data: updatedSize };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating size:", error);
-    return { success: false, error: error.message || "Failed to update size" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update size" };
   }
 }
 
@@ -575,9 +575,9 @@ export async function deleteSize(id: string) {
 
     revalidatePath("/admin/attributes");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting size:", error);
-    return { success: false, error: error.message || "Failed to delete size" };
+    return { success: false, error: error instanceof Error ? error.message : "Failed to delete size" };
   }
 }
 
@@ -626,11 +626,11 @@ export async function createGender(data: { label: string }) {
 
     revalidatePath("/admin/attributes");
     return { success: true, data: newGender };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating gender:", error);
     return {
       success: false,
-      error: error.message || "Failed to create gender",
+      error: error instanceof Error ? error.message : "Failed to create gender",
     };
   }
 }
@@ -668,11 +668,11 @@ export async function updateGender(id: string, data: { label: string }) {
 
     revalidatePath("/admin/attributes");
     return { success: true, data: updatedGender };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating gender:", error);
     return {
       success: false,
-      error: error.message || "Failed to update gender",
+      error: error instanceof Error ? error.message : "Failed to update gender",
     };
   }
 }
@@ -685,11 +685,11 @@ export async function deleteGender(id: string) {
 
     revalidatePath("/admin/attributes");
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting gender:", error);
     return {
       success: false,
-      error: error.message || "Failed to delete gender",
+      error: error instanceof Error ? error.message : "Failed to delete gender",
     };
   }
 }

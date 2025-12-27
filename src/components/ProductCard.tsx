@@ -259,13 +259,8 @@ export default function ProductCard({
             {href && onAddToCart && (
               <Link
                 href={href}
-                className={`${
-                  compact
-                    ? "w-full"
-                    : onAddToCart
-                      ? "flex-1"
-                      : "w-full"
-                } flex items-center justify-center rounded-md border-2 border-[--color-primary] bg-light-100 px-4 py-2 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-light-100 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2`}
+                className={`${compact ? "w-full" : "flex-1"
+                  } flex items-center justify-center rounded-md border-2 border-[--color-primary] bg-light-100 px-4 py-2 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-light-100 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2`}
                 aria-label={`View details for ${title}`}
               >
                 Details

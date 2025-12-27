@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, type UseFormRegister, type Control, type FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { createProduct, generateUniqueSlug, checkSlugAvailability } from '@/lib/actions/product';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { createProduct } from '@/lib/actions/product';
 import { createProductFormSchema, type CreateProductInput } from '@/lib/validations/product';
 import { generateSlug, generateVariantPermutations, type VariantOptionGroup } from '@/lib/utils/product';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,8 @@ interface ProductFormProps {
     values: Array<{ id: string; value: string }>;
   }>;
 }
+
+type FormData = CreateProductInput;
 
 export default function ProductForm({ categories, brands, optionGroups }: ProductFormProps) {
   const router = useRouter();
@@ -400,7 +402,13 @@ export default function ProductForm({ categories, brands, optionGroups }: Produc
 }
 
 // Variant Option Group Sub-component
-function VariantOptionGroup({ index, register, control, errors, onRemove }: any) {
+function VariantOptionGroup({ index, register, control, errors, onRemove }: {
+  index: number;
+  register: UseFormRegister<FormData>;
+  control: Control<FormData>;
+  errors: FieldErrors<FormData>;
+  onRemove: () => void;
+}) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `variantOptions.${index}.values`,

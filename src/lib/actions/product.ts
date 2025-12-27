@@ -13,15 +13,12 @@ import {
   productVariantOptions,
   variantOptionAssignments,
   productToCategories,
-  colors,
-  sizes,
-  genders,
   brands,
   categories,
 } from '@/lib/db/schema';
 import { createProductFormSchema, type CreateProductInput } from '@/lib/validations/product';
 import { generateSlug } from '@/lib/utils/product';
-import { eq, and, isNull, ne } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 /**
  * Verify admin role for protected actions
@@ -600,6 +597,7 @@ export async function getCategories() {
     });
     return { success: true, categories: data };
   } catch (error) {
+    console.error('Error fetching categories:', error);
     return { success: false, error: 'Failed to fetch categories' };
   }
 }
@@ -614,6 +612,7 @@ export async function getBrands() {
     });
     return { success: true, brands: data };
   } catch (error) {
+    console.error('Error fetching brands:', error);
     return { success: false, error: 'Failed to fetch brands' };
   }
 }
@@ -628,6 +627,7 @@ export async function getColors() {
     });
     return { success: true, colors: data };
   } catch (error) {
+    console.error('Error fetching colors:', error);
     return { success: false, error: 'Failed to fetch colors' };
   }
 }
@@ -642,6 +642,7 @@ export async function getSizes() {
     });
     return { success: true, sizes: data };
   } catch (error) {
+    console.error('Error fetching sizes:', error);
     return { success: false, error: 'Failed to fetch sizes' };
   }
 }
@@ -656,6 +657,7 @@ export async function getGenders() {
     });
     return { success: true, genders: data };
   } catch (error) {
+    console.error('Error fetching genders:', error);
     return { success: false, error: 'Failed to fetch genders' };
   }
 }

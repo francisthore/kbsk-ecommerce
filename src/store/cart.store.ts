@@ -48,6 +48,7 @@ interface CartState {
   setCart: (data: {
     items: CartItemData[];
     totals: CartTotals;
+    freeShippingThreshold?: number;
     itemCount: number;
     freeShipping: FreeShippingInfo;
   }) => void;
@@ -132,7 +133,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
     
     const total = subtotal;
-    const threshold = 1000;
+    const threshold = get().freeShipping.threshold;
     const eligible = total >= threshold;
     const amountRemaining = eligible ? 0 : threshold - total;
     
@@ -170,7 +171,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
     
     const total = subtotal;
-    const threshold = 1000;
+    const threshold = get().freeShipping.threshold;
     const eligible = total >= threshold;
     const amountRemaining = eligible ? 0 : threshold - total;
     
@@ -206,7 +207,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     });
     
     const total = subtotal;
-    const threshold = 1000;
+    const threshold = get().freeShipping.threshold;
     const eligible = total >= threshold;
     const amountRemaining = eligible ? 0 : threshold - total;
     

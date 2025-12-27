@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { products, orders, users } from '@/lib/db/schema';
-import { sql, count, sum } from 'drizzle-orm';
+import { products, users } from '@/lib/db/schema';
+import { count } from 'drizzle-orm';
 import { Package, ShoppingCart, Users, DollarSign } from 'lucide-react';
 
 async function getDashboardStats() {
@@ -79,7 +79,7 @@ function StatsCard({
 }: { 
   title: string; 
   value: string | number; 
-  icon: any; 
+  icon: React.ComponentType<{ className?: string }>; 
   color: 'blue' | 'green' | 'purple' | 'orange';
 }) {
   const colorClasses = {

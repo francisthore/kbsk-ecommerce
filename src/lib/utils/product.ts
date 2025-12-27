@@ -129,7 +129,7 @@ export function isSlugValid(slug: string, existingSlug?: string): boolean {
  * @param price - Price as string or number
  * @returns Formatted price string in ZAR
  */
-export function formatPrice(price: string | number): string {
+export function formatProductPrice(price: string | number): string {
   const numPrice = typeof price === 'string' ? parseFloat(price) : price;
   return new Intl.NumberFormat('en-ZA', {
     style: 'currency',

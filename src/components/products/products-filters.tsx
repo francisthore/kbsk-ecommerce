@@ -14,18 +14,34 @@ interface FilterOption {
   slug: string;
 }
 
+interface GenderOption {
+  id: string;
+  label: string;
+  slug: string;
+}
+
 interface AvailableFilters {
   brands: FilterOption[];
   categories: FilterOption[];
   colors: (FilterOption & { hexCode: string })[];
   sizes: (FilterOption & { sortOrder: number })[];
-  genders: (FilterOption & { label: string })[];
+  genders: GenderOption[];
   priceRange: { min: number; max: number };
+}
+
+interface CurrentFilters {
+  categoryIds?: string[];
+  brandIds?: string[];
+  colorIds?: string[];
+  sizeIds?: string[];
+  genderIds?: string[];
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 interface ProductsFiltersProps {
   availableFilters: AvailableFilters;
-  currentFilters: any;
+  currentFilters: CurrentFilters;
 }
 
 export function ProductsFilters({

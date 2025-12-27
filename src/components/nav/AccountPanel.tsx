@@ -3,39 +3,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { signOut } from "@/lib/auth/actions";
-import { User, Package, Heart, MapPin, Settings, LogOut, CheckCircle } from "lucide-react";
+import { useSession } from "@/lib/auth/client";
+import { User, Package, Heart, MapPin, Settings, LogOut, CheckCircle, LayoutDashboard } from "lucide-react";
+import GlobalSignOutButton from "@/components/auth/GlobalSignOutButton";
 
 export interface AccountPanelProps {
   isOpen: boolean;
   onClose: () => void;
-  isSignedIn?: boolean;
-  userName?: string;
 }
 
 export default function AccountPanel({
   isOpen,
   onClose,
-  isSignedIn = false,
-  userName,
 }: AccountPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("Signed out successfully");
-      onClose();
-      router.push("/");
-    } catch (error) {
-      console.error("Sign out error:", error);
-      toast.error("Failed to sign out");
-    }
-  };
+  const { data: session, isPending } = useSession();
+  
+  const isSignedIn = !!session?.user;
+  const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'User';
 
   useEffect(() => {
     if (isOpen) {
@@ -110,12 +96,27 @@ export default function AccountPanel({
           <div className="flex-1 overflow-y-auto px-6 py-6">
             {isSignedIn ? (
               <div className="space-y-6">
-                <div className="rounded-lg bg-light-200 p-4">
-                  <p className="text-lead font-medium text-dark-900">
-                    Welcome back, {userName || "User"}!
+                {/* Welcome Message */}
+                <div className="rounded-lg bg-gradient-to-r from-[var(--color-primary)]/10 to-[var(--color-cta)]/10 p-4">
+                  <p className="text-sm font-medium text-[var(--color-text-secondary)]">
+                    Welcome back!
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
+                    {userName || "User"}
                   </p>
                 </div>
 
+                {/* Dashboard Button - Prominent */}
+                <Link
+                  href="/dashboard"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-[var(--color-cta)] px-4 py-3.5 text-body-medium font-semibold text-white shadow-sm transition-all hover:bg-[var(--color-cta-dark)] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[var(--color-cta)] focus:ring-offset-2"
+                  onClick={onClose}
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  My Dashboard
+                </Link>
+
+                {/* Navigation Links */}
                 <nav className="space-y-1">
                   <Link
                     href="/account"
@@ -159,14 +160,15 @@ export default function AccountPanel({
                   </Link>
                 </nav>
 
+                {/* Sign Out Button */}
                 <div className="border-t border-light-300 pt-4">
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[--color-primary] px-4 py-3 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:ring-offset-2"
+                  <GlobalSignOutButton
+                    onSignOutComplete={onClose}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-[var(--color-primary)] bg-white px-4 py-3 text-body-medium font-medium text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-white focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
                   >
                     <LogOut className="h-5 w-5" />
-                    Sign Out
-                  </button>
+                    <span>Sign Out</span>
+                  </GlobalSignOutButton>
                 </div>
               </div>
             ) : (

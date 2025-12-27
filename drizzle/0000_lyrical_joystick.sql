@@ -4,7 +4,7 @@ CREATE TYPE "public"."address_type" AS ENUM('billing', 'shipping');--> statement
 CREATE TYPE "public"."credit_terms" AS ENUM('prepaid', '30d', '60d');--> statement-breakpoint
 CREATE TYPE "public"."media_kind" AS ENUM('image', 'video', 'doc');--> statement-breakpoint
 CREATE TYPE "public"."order_status" AS ENUM('pending', 'paid', 'shipped', 'delivered', 'cancelled');--> statement-breakpoint
-CREATE TYPE "public"."payment_method" AS ENUM('stripe', 'paypal', 'cod', 'bank_transfer');--> statement-breakpoint
+CREATE TYPE "public"."payment_method" AS ENUM('stripe', 'paypal', 'cod', 'bank_transfer', 'payfast');--> statement-breakpoint
 CREATE TYPE "public"."payment_status" AS ENUM('initiated', 'completed', 'failed', 'refunded');--> statement-breakpoint
 CREATE TYPE "public"."payment_term" AS ENUM('prepaid', '30d', '60d');--> statement-breakpoint
 CREATE TYPE "public"."product_type" AS ENUM('tool', 'accessory', 'consumable', 'ppe');--> statement-breakpoint
@@ -473,6 +473,7 @@ CREATE TABLE "shop_settings" (
 	"currency_locale" text DEFAULT 'en-ZA' NOT NULL,
 	"tax_rate" numeric(5, 4) DEFAULT '0.1500' NOT NULL,
 	"markup_rate" numeric(5, 4) DEFAULT '0.3000' NOT NULL,
+	"shipping_fee" numeric(10, 2) DEFAULT '135.00' NOT NULL,
 	"free_shipping_threshold" numeric(10, 2) DEFAULT '500.00' NOT NULL,
 	"business_registration_number" text,
 	"vat_number" text,

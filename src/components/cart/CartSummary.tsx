@@ -4,6 +4,7 @@ import { Lock, ArrowRight } from "lucide-react";
 import { formatPrice } from "@/lib/utils/cart";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCartStore } from "@/store/cart.store";
 
 interface CartSummaryProps {
   subtotal: number;
@@ -23,10 +24,12 @@ export default function CartSummary({
   onViewCart,
 }: CartSummaryProps) {
   const router = useRouter();
+  const { closeDrawer } = useCartStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleCheckout = () => {
     setIsProcessing(true);
+    closeDrawer();
     router.push("/checkout");
   };
 
@@ -92,7 +95,7 @@ export default function CartSummary({
           {!isDrawer && (
             <div className="flex items-center justify-center gap-2 text-caption text-[var(--color-text-secondary)]">
               <Lock className="h-4 w-4" />
-              <span>100% Secure Payments</span>
+              <span>100% Secure Paymentssss</span>
             </div>
           )}
         </div>

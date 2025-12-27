@@ -244,7 +244,7 @@ export default function Navbar({
     syncCart();
   }, [setCart]);
 
-  const megaMenuTimeout = useRef<NodeJS.Timeout>();
+  const megaMenuTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,7 +272,6 @@ export default function Navbar({
     }
     setActiveMegaMenu(menu);
   };
-
   const handleMegaMenuClose = () => {
     megaMenuTimeout.current = setTimeout(() => {
       setActiveMegaMenu(null);
@@ -672,8 +671,6 @@ export default function Navbar({
       <AccountPanel
         isOpen={accountOpen}
         onClose={() => setAccountOpen(false)}
-        isSignedIn={isSignedIn}
-        userName={userName}
       />
     </header>
   );

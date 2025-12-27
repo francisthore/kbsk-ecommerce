@@ -10,7 +10,7 @@ import { updateShopSettingsSchema, type UpdateShopSettings, type ShopSettings } 
 import { useRouter } from 'next/navigation';
 
 interface Props {
-  initialData: ShopSettings;
+  initialData: Partial<ShopSettings>;
 }
 
 export default function ShopSettingsForm({ initialData }: Props) {
