@@ -191,7 +191,7 @@ export default function ProductClient({
       </nav>
 
       {/* Main Product Section */}
-      <section className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_480px] lg:gap-12">
+      <section className="grid grid-cols-1 gap-8 lg:grid-cols-[40%_1fr] lg:gap-12">
         {/* Image Gallery */}
         <div className="lg:sticky lg:top-6 lg:self-start">
           <ImageGallery images={galleryImages} productName={product.name} />
@@ -299,7 +299,7 @@ export default function ProductClient({
           />
 
           {/* Action Buttons */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 max-w-md">
             <AddToCartButton
               variantId={selectedVariant?.id || ""}
               variantSku={selectedVariant?.sku || ""}

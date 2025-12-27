@@ -228,10 +228,17 @@ export async function getProducts(
     ? await db.query.brands.findMany({ where: inArray(brands.id, brandIds as string[]) })
     : [];
 
-  // Calculate min/max prices and stock
+  // Calculate min/max prices, stock, and variant counts
   const productMetaMap = new Map<
     string,
-    { minPrice: number; maxPrice: number; inStock: boolean; onSale: boolean }
+    { 
+      minPrice: number; 
+      maxPrice: number; 
+      inStock: boolean; 
+      onSale: boolean;
+      colorCount: number;
+      sizeCount: number;
+    }
   >();
 
   for (const product of baseProducts) {
@@ -244,7 +251,26 @@ export async function getProducts(
     const inStock = variants.some((v) => v.inStock > 0);
     const onSale = variants.some((v) => v.salePrice !== null);
 
-    productMetaMap.set(product.id, { minPrice, maxPrice, inStock, onSale });
+    // Count unique colors and sizes
+    const uniqueColors = new Set(
+      variants
+        .map((v) => v.colorId)
+        .filter((id): id is string => id !== null && id !== undefined)
+    );
+    const uniqueSizes = new Set(
+      variants
+        .map((v) => v.sizeId)
+        .filter((id): id is string => id !== null && id !== undefined)
+    );
+
+    productMetaMap.set(product.id, { 
+      minPrice, 
+      maxPrice, 
+      inStock, 
+      onSale,
+      colorCount: uniqueColors.size,
+      sizeCount: uniqueSizes.size,
+    });
   }
 
   // Enrich products
@@ -261,6 +287,8 @@ export async function getProducts(
       maxPrice: meta?.maxPrice ?? 0,
       inStock: meta?.inStock ?? false,
       onSale: meta?.onSale ?? false,
+      colorCount: meta?.colorCount ?? 0,
+      sizeCount: meta?.sizeCount ?? 0,
     };
   });
 
@@ -842,6 +870,10 @@ async function enrichProductsWithMetadata(prods: any[]) {
         inArray(productVariants.productId, ids),
         isNull(productVariants.deletedAt)
       ),
+      with: {
+        color: true,
+        size: true,
+      },
     }),
     db.query.brands.findMany({
       where: inArray(
@@ -853,7 +885,14 @@ async function enrichProductsWithMetadata(prods: any[]) {
 
   const priceMap = new Map<
     string,
-    { minPrice: number; maxPrice: number; inStock: boolean; onSale: boolean }
+    { 
+      minPrice: number; 
+      maxPrice: number; 
+      inStock: boolean; 
+      onSale: boolean;
+      colorCount: number;
+      sizeCount: number;
+    }
   >();
 
   for (const p of prods) {
@@ -861,11 +900,26 @@ async function enrichProductsWithMetadata(prods: any[]) {
     if (!pVariants.length) continue;
 
     const prices = pVariants.map((v) => Number(v.salePrice ?? v.price));
+    
+    // Count unique colors and sizes
+    const uniqueColors = new Set(
+      pVariants
+        .map((v) => v.colorId)
+        .filter((id): id is string => id !== null && id !== undefined)
+    );
+    const uniqueSizes = new Set(
+      pVariants
+        .map((v) => v.sizeId)
+        .filter((id): id is string => id !== null && id !== undefined)
+    );
+    
     priceMap.set(p.id, {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
       inStock: pVariants.some((v) => v.inStock > 0),
       onSale: pVariants.some((v) => v.salePrice !== null),
+      colorCount: uniqueColors.size,
+      sizeCount: uniqueSizes.size,
     });
   }
 
@@ -877,6 +931,8 @@ async function enrichProductsWithMetadata(prods: any[]) {
     maxPrice: priceMap.get(p.id)?.maxPrice ?? 0,
     inStock: priceMap.get(p.id)?.inStock ?? false,
     onSale: priceMap.get(p.id)?.onSale ?? false,
+    colorCount: priceMap.get(p.id)?.colorCount ?? 0,
+    sizeCount: priceMap.get(p.id)?.sizeCount ?? 0,
   }));
 }
 

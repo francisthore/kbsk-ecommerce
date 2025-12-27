@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Card } from "@/components";
+import ProductCard from "@/components/ProductCard";
 import { addToCart, getCart } from "@/lib/actions/cart";
 import { toggleWishlist } from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,8 @@ interface Product {
   onSale: boolean;
   image: { url: string } | null;
   brand: { name: string } | null;
+  colorCount?: number;
+  sizeCount?: number;
 }
 
 interface ProductsGridProps {
@@ -96,12 +98,13 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
-        <Card
+        <ProductCard
           key={product.id}
           title={product.name}
           description={product.description || ""}
           imageSrc={product.image?.url || "/placeholder-product.svg"}
           price={product.minPrice}
+          maxPrice={product.maxPrice}
           originalPrice={
             product.onSale && product.maxPrice > product.minPrice
               ? product.maxPrice
@@ -117,8 +120,8 @@ export function ProductsGrid({ products, userId }: ProductsGridProps) {
                 : undefined
           }
           href={`/products/${product.slug}`}
-          onAddToCart={() => handleAddToCart(product.id)}
-          isLoading={loadingProductId === product.id}
+          colorCount={product.colorCount}
+          sizeCount={product.sizeCount}
         />
       ))}
     </div>

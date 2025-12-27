@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Card, HeroSlider } from "@/components";
+import ProductCard from "@/components/ProductCard";
 import WelcomeCategoriesAndBrands from "@/components/welcome/WelcomeCategoriesAndBrands";
 import { heroSlides } from "@/lib/hero-slides";
 import { categories } from "@/lib/welcome-categories";
@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import { categories as categoriesTable, brands as brandsTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { Button } from "@/components/ui/button";
-import InteractiveCard from "@/components/InteractiveCard";
+import { HeroSlider } from "@/components";
 
 const Home = async () => {
   // Fetch featured products (12 total)
@@ -89,19 +89,20 @@ const Home = async () => {
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {featuredProducts.map((product) => (
-              <InteractiveCard
+              <ProductCard
                 key={product.id}
                 title={product.name}
                 description={product.description || ""}
                 imageSrc={product.image?.url || "/placeholder-product.svg"}
                 price={product.minPrice}
+                maxPrice={product.maxPrice}
                 originalPrice={
                   product.onSale && product.maxPrice > product.minPrice
                     ? product.maxPrice
                     : undefined
                 }
-                rating={4.5} // You can calculate this from reviews later
-                reviewCount={0} // You can fetch this from reviews later
+                rating={4.5}
+                reviewCount={0}
                 badge={
                   product.onSale
                     ? ("Sale" as const)
@@ -110,6 +111,8 @@ const Home = async () => {
                       : undefined
                 }
                 href={`/products/${product.slug}`}
+                colorCount={product.colorCount}
+                sizeCount={product.sizeCount}
               />
             ))}
           </div>
@@ -136,12 +139,13 @@ const Home = async () => {
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               {powerToolsProducts.items.map((product) => (
-                <Card
+                <ProductCard
                   key={product.id}
                   title={product.name}
                   description={product.description || ""}
                   imageSrc={product.image?.url || "/placeholder-product.svg"}
                   price={product.minPrice}
+                  maxPrice={product.maxPrice}
                   originalPrice={
                     product.onSale && product.maxPrice > product.minPrice
                       ? product.maxPrice
@@ -157,6 +161,8 @@ const Home = async () => {
                         : undefined
                   }
                   href={`/products/${product.slug}`}
+                  colorCount={product.colorCount}
+                  sizeCount={product.sizeCount}
                 />
               ))}
             </div>
@@ -184,12 +190,13 @@ const Home = async () => {
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               {milwaukeeProducts.items.map((product) => (
-                <Card
+                <ProductCard
                   key={product.id}
                   title={product.name}
                   description={product.description || ""}
                   imageSrc={product.image?.url || "/placeholder-product.svg"}
                   price={product.minPrice}
+                  maxPrice={product.maxPrice}
                   originalPrice={
                     product.onSale && product.maxPrice > product.minPrice
                       ? product.maxPrice
@@ -205,6 +212,8 @@ const Home = async () => {
                         : ("Bestseller" as const)
                   }
                   href={`/products/${product.slug}`}
+                  colorCount={product.colorCount}
+                  sizeCount={product.sizeCount}
                 />
               ))}
             </div>
