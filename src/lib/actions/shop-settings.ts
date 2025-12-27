@@ -89,6 +89,7 @@ export async function updateShopSettings(data: UpdateShopSettings) {
           taxRate: validated.taxRate?.toString(),
           markupRate: validated.markupRate?.toString(),
           freeShippingThreshold: validated.freeShippingThreshold?.toString(),
+          shippingFee: validated.shippingFee?.toString(),
           updatedAt: new Date(),
           updatedBy: user.id,
         })
@@ -103,6 +104,7 @@ export async function updateShopSettings(data: UpdateShopSettings) {
           ...validated,
           taxRate: (validated.taxRate ?? 0.15).toString(),
           markupRate: (validated.markupRate ?? 0.30).toString(),
+          shippingFee: (validated.shippingFee ?? 0).toString(),
           freeShippingThreshold: (validated.freeShippingThreshold ?? 500).toString(),
           updatedBy: user.id,
         })

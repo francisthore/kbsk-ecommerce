@@ -59,7 +59,7 @@ export const insertProductSchema = z.object({
   brandId: z.string().uuid().optional().nullable(),
   productType: z.enum(['tool', 'accessory', 'consumable', 'ppe']).optional(),
   genderId: z.string().uuid().optional().nullable(),
-  specs: z.record(z.any()).optional(),
+  specs: z.record(z.string(), z.any()).optional(),
   isPublished: z.boolean().optional(),
   isBundle: z.boolean().optional(),
   defaultVariantId: z.string().uuid().optional().nullable(),

@@ -53,7 +53,7 @@ export const auth = betterAuth({
       });
       await sendBetterAuthVerificationEmail(user, url);
     },
-    async onSuccess({ user }) {
+    async onSuccess({ user }: { user: { email: string; name: string } }) {
       console.log('🚨 Email verification successful, sending welcome email to:', user.email);
       await sendBetterAuthWelcomeEmail(user);
     },

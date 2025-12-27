@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { validateEmail } from "@/lib/utils/validation";
-import { forgetPassword } from "@/lib/auth/client";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");

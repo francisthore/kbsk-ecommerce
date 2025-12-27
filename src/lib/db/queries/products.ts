@@ -100,7 +100,7 @@ export async function getProducts(
   }
 
   if (filters.productTypes?.length) {
-    conditions.push(inArray(products.productType, filters.productTypes as Array<'ppe' | 'shoes' | 'clothing' | 'accessories'>));
+    conditions.push(inArray(products.productType, filters.productTypes as Array<'tool' | 'accessory' | 'consumable' | 'ppe'>));
   }
 
   if (filters.hazmat !== undefined) {
@@ -481,16 +481,16 @@ export async function getProductById(productId: string) {
 
     if (!product) return null;
 
-    const [brand, category, gender, images, variants, standards, productCollectionsData, reviewStats] =
+    const [brand, categoryData, gender, images, variants, standards, productCollectionsData, reviewStats] =
       await Promise.all([
         product.brandId
           ? db.query.brands.findFirst({ where: eq(brands.id, product.brandId) })
           : null,
-        product.categoryId
-          ? db.query.categories.findFirst({
-              where: eq(categories.id, product.categoryId),
-            })
-          : null,
+        // Fetch primary category through junction table
+        db.query.productToCategories.findFirst({
+          where: eq(productToCategories.productId, product.id),
+          with: { category: true },
+        }),
         product.genderId
           ? db.query.genders.findFirst({ where: eq(genders.id, product.genderId) })
           : null,
@@ -567,6 +567,8 @@ export async function getProductById(productId: string) {
     const inStock = enrichedVariants.some(v => v.inStock > 0);
     const totalStock = enrichedVariants.reduce((sum, v) => sum + v.inStock, 0);
 
+    const category = categoryData?.category || null;
+
     return {
       ...product,
       brand,
@@ -603,16 +605,16 @@ export async function getProductBySlug(slug: string) {
 
     if (!product) return null;
 
-    const [brand, category, gender, images, variants, standards, productCollectionsData, reviewStats] =
+    const [brand, categoryData, gender, images, variants, standards, productCollectionsData, reviewStats] =
       await Promise.all([
       product.brandId
         ? db.query.brands.findFirst({ where: eq(brands.id, product.brandId) })
         : null,
-      product.categoryId
-        ? db.query.categories.findFirst({
-            where: eq(categories.id, product.categoryId),
-          })
-        : null,
+      // Fetch primary category through junction table
+      db.query.productToCategories.findFirst({
+        where: eq(productToCategories.productId, product.id),
+        with: { category: true },
+      }),
       product.genderId
         ? db.query.genders.findFirst({ where: eq(genders.id, product.genderId) })
         : null,
@@ -688,6 +690,8 @@ export async function getProductBySlug(slug: string) {
   // Check overall stock availability
   const inStock = enrichedVariants.some(v => v.inStock > 0);
   const totalStock = enrichedVariants.reduce((sum, v) => sum + v.inStock, 0);
+
+  const category = categoryData?.category || null;
 
   return {
     ...product,
@@ -856,7 +860,7 @@ export async function searchProducts(
 async function enrichProductsWithMetadata(prods: Array<Record<string, unknown>>) {
   if (!prods.length) return [];
 
-  const ids = prods.map((p) => p.id);
+  const ids = prods.map((p) => p.id as string);
 
   const [images, variants, brandsData] = await Promise.all([
     db.query.productImages.findMany({
@@ -896,7 +900,8 @@ async function enrichProductsWithMetadata(prods: Array<Record<string, unknown>>)
   >();
 
   for (const p of prods) {
-    const pVariants = variants.filter((v) => v.productId === p.id);
+    const productId = p.id as string;
+    const pVariants = variants.filter((v) => v.productId === productId);
     if (!pVariants.length) continue;
 
     const prices = pVariants.map((v) => Number(v.salePrice ?? v.price));
@@ -913,7 +918,7 @@ async function enrichProductsWithMetadata(prods: Array<Record<string, unknown>>)
         .filter((id): id is string => id !== null && id !== undefined)
     );
     
-    priceMap.set(p.id, {
+    priceMap.set(productId, {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
       inStock: pVariants.some((v) => v.inStock > 0),
@@ -923,17 +928,20 @@ async function enrichProductsWithMetadata(prods: Array<Record<string, unknown>>)
     });
   }
 
-  return prods.map((p) => ({
-    ...p,
-    brand: brandsData.find((b) => b.id === p.brandId) || null,
-    image: images.find((i) => i.productId === p.id) || null,
-    minPrice: priceMap.get(p.id)?.minPrice ?? 0,
-    maxPrice: priceMap.get(p.id)?.maxPrice ?? 0,
-    inStock: priceMap.get(p.id)?.inStock ?? false,
-    onSale: priceMap.get(p.id)?.onSale ?? false,
-    colorCount: priceMap.get(p.id)?.colorCount ?? 0,
-    sizeCount: priceMap.get(p.id)?.sizeCount ?? 0,
-  }));
+  return prods.map((p) => {
+    const productId = p.id as string;
+    return {
+      ...p,
+      brand: brandsData.find((b) => b.id === p.brandId) || null,
+      image: images.find((i) => i.productId === productId) || null,
+      minPrice: priceMap.get(productId)?.minPrice ?? 0,
+      maxPrice: priceMap.get(productId)?.maxPrice ?? 0,
+      inStock: priceMap.get(productId)?.inStock ?? false,
+      onSale: priceMap.get(productId)?.onSale ?? false,
+      colorCount: priceMap.get(productId)?.colorCount ?? 0,
+      sizeCount: priceMap.get(productId)?.sizeCount ?? 0,
+    };
+  });
 }
 
 // ============================================================================

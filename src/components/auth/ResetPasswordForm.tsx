@@ -11,7 +11,6 @@ import {
   passwordsMatch,
   getPasswordStrength,
 } from "@/lib/utils/validation";
-import { resetPassword } from "@/lib/auth/client";
 
 export default function ResetPasswordForm() {
   const router = useRouter();

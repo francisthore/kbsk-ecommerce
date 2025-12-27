@@ -125,7 +125,7 @@ export async function createProduct(input: CreateProductInput) {
           productId: product.id,
           variantId: null, // Product-level images
           url: img.url,
-          kind: 'image',
+          kind: 'image' as const,
           sortOrder: img.displayOrder ?? index,
           isPrimary: img.isPrimary ?? index === 0,
         }))
@@ -227,7 +227,7 @@ export async function createProduct(input: CreateProductInput) {
               if (valueId) {
                 await db.insert(variantOptionAssignments).values({
                   variantId: insertedVariant.id,
-                  valueId: valueId,
+                  optionValueId: valueId,
                 });
               }
             }
@@ -482,7 +482,7 @@ export async function updateProduct(productId: string, input: CreateProductInput
           productId,
           variantId: null,
           url: img.url,
-          kind: 'image',
+          kind: 'image' as const,
           sortOrder: img.displayOrder ?? index,
           isPrimary: img.isPrimary ?? index === 0,
         }))

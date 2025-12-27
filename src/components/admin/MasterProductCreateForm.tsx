@@ -39,6 +39,7 @@ import {
   generateVariantCombinations,
   bulkUpdatePrice,
   bulkUpdateStock,
+  type GeneratedVariant,
 } from '@/lib/utils/variant-generator'; // Ensure you have this utility file
 import { generateSlug } from '@/lib/utils/product';
 import { calculateFinalPrice, shopConfig } from '@/lib/config/shop';
@@ -217,7 +218,7 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
 
   // Form setup
   const form = useForm<CreateProductFormResolverInput>({
-  resolver: zodResolver(createProductFormResolverSchema),
+  resolver: zodResolver(createProductFormResolverSchema) as unknown as Resolver<CreateProductFormResolverInput>,
   defaultValues: buildDefaultValues(initialData),
 });
 
@@ -668,8 +669,18 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
 
   const handleBulkApplyPrice = () => {
     if (!bulkPrice) return;
-    const updated = bulkUpdatePrice(generatedVariants, bulkPrice);
-    setGeneratedVariants(updated);
+    // Only apply to variable variants
+    if (productMode === 'variable') {
+      const updated = bulkUpdatePrice(generatedVariants as GeneratedVariant[], bulkPrice);
+      setGeneratedVariants(updated);
+    } else {
+      // For simple products, update the single variant price
+      const updated = [...generatedVariants];
+      if (updated[0]) {
+        updated[0] = { ...updated[0], price: bulkPrice };
+        setGeneratedVariants(updated);
+      }
+    }
     toast.success('Price applied to all variants');
   };
 
@@ -677,19 +688,39 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
     if (!bulkStock) return;
     const stock = parseInt(bulkStock);
     if (isNaN(stock)) return;
-    const updated = bulkUpdateStock(generatedVariants, stock);
-    setGeneratedVariants(updated);
+    // Only apply to variable variants
+    if (productMode === 'variable') {
+      const updated = bulkUpdateStock(generatedVariants as GeneratedVariant[], stock);
+      setGeneratedVariants(updated);
+    } else {
+      // For simple products, update the single variant stock
+      const updated = [...generatedVariants];
+      if (updated[0]) {
+        updated[0] = { ...updated[0], inStock: stock };
+        setGeneratedVariants(updated);
+      }
+    }
     toast.success('Stock applied to all variants');
   };
 
   const duplicateVariant = (index: number) => {
     const variant = generatedVariants[index];
-    const newVariant = {
-      ...variant,
-      combinationId: `${variant.combinationId}-copy-${Date.now()}`,
-      sku: `${variant.sku}-COPY`,
-    };
-    setGeneratedVariants([...generatedVariants, newVariant]);
+    
+    if (variant.variantType === 'variable') {
+      const newVariant = {
+        ...variant,
+        combinationId: `${variant.combinationId}-copy-${Date.now()}`,
+        sku: `${variant.sku}-COPY`,
+      };
+      setGeneratedVariants([...generatedVariants, newVariant]);
+    } else {
+      // Simple variants don't have combinationId
+      const newVariant = {
+        ...variant,
+        sku: `${variant.sku}-COPY`,
+      };
+      setGeneratedVariants([...generatedVariants, newVariant]);
+    }
   };
 
   const deleteVariant = (index: number) => {
@@ -752,10 +783,6 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
             salePrice: finalSalePrice,
             inStock: variantData.inStock,
             backorderable: variantData.backorderable || false,
-            // Explicitly exclude colorId, sizeId, genderId for simple products
-            colorId: undefined,
-            sizeId: undefined,
-            genderId: undefined,
           }],
         };
         
@@ -767,7 +794,12 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
         console.log('Generated Variants Count:', generatedVariants.length);
         console.log('Attribute Groups:', attributeGroups);
         
-        const processedVariants = generatedVariants.map(variant => {
+        // Type guard: filter only variable variants
+        const variableVariants = generatedVariants.filter(
+          (v): v is GeneratedVariant => v.variantType === 'variable'
+        );
+        
+        const processedVariants = variableVariants.map(variant => {
           const inputPrice = parseFloat(variant.price);
           const finalPrice = calculateFinalPrice(inputPrice, vatIncluded);
           
@@ -1614,8 +1646,10 @@ export default function MasterProductCreateForm({ attributes, initialData, mode 
                       </TableHeader>
                       <TableBody>
                         {generatedVariants.map((variant, index) => (
-                          <TableRow key={variant.combinationId}>
-                            <TableCell className="font-medium">{variant.displayName}</TableCell>
+                          <TableRow key={variant.variantType === 'variable' ? variant.combinationId : `simple-${index}`}>
+                            <TableCell className="font-medium">
+                              {variant.variantType === 'variable' ? variant.displayName : variant.sku}
+                            </TableCell>
                             <TableCell>
                               <Input
                                 value={variant.sku}

@@ -28,6 +28,10 @@ interface Filters {
   colorIds?: string[];
   sizeIds?: string[];
   genderIds?: string[];
+  priceMin?: string | number;
+  priceMax?: string | number;
+  inStock?: boolean;
+  onSale?: boolean;
 }
 
 export function FilterBadges({ filters, availableFilters }: {

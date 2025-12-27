@@ -36,15 +36,24 @@ export default function BuyNowButton({
     setError(null);
 
     // Optimistic update to Zustand store
-    addToZustandCart(
-      {
-        id: variantId,
-        name: `${productName} - ${variantSku}`,
-        price,
-        image: imageUrl,
-      },
-      quantity
-    );
+    addToZustandCart({
+      id: variantId,
+      cartItemId: variantId, // Temporary ID before server sync
+      productId: variantId,
+      productName: productName,
+      brand: null,
+      variantId: variantId,
+      sku: variantSku,
+      price: price.toString(),
+      salePrice: null,
+      quantity: quantity,
+      inStock: 999,
+      image: imageUrl || null,
+      colorName: null,
+      colorHex: null,
+      sizeName: null,
+      isSupplierWarehouse: false,
+    });
 
     // Navigate immediately
     router.push("/checkout");

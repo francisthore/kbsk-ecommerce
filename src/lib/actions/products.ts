@@ -351,8 +351,8 @@ export async function getRecommendedProducts(
     const relatedProducts = await getRelatedProducts(productId, 6);
 
     return relatedProducts.map((product) => ({
-      id: product.slug,
-      title: product.name,
+      id: (product as unknown as { slug: string }).slug,
+      title: (product as unknown as { name: string }).name,
       imageUrl: product.image?.url || "/placeholder-product.svg",
       price: product.minPrice,
     }));

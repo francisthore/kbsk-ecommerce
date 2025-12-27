@@ -35,8 +35,12 @@ interface CurrentFilters {
   colorIds?: string[];
   sizeIds?: string[];
   genderIds?: string[];
+  priceMin?: number;
+  priceMax?: number;
   minPrice?: number;
   maxPrice?: number;
+  inStock?: boolean;
+  onSale?: boolean;
 }
 
 interface ProductsFiltersProps {
@@ -123,7 +127,7 @@ export function ProductsFilters({
               key={category.id}
               id={category.id}
               label={category.name}
-              checked={currentFilters.categoryIds?.includes(category.id)}
+              checked={!!currentFilters.categoryIds?.includes(category.id)}
               onCheckedChange={(checked) =>
                 updateFilter("category", category.id, checked as boolean)
               }
@@ -140,7 +144,7 @@ export function ProductsFilters({
               key={brand.id}
               id={brand.id}
               label={brand.name}
-              checked={currentFilters.brandIds?.includes(brand.id)}
+              checked={!!currentFilters.brandIds?.includes(brand.id)}
               onCheckedChange={(checked) =>
                 updateFilter("brand", brand.id, checked as boolean)
               }
@@ -249,7 +253,7 @@ export function ProductsFilters({
               key={gender.id}
               id={gender.id}
               label={gender.label}
-              checked={currentFilters.genderIds?.includes(gender.id)}
+              checked={!!currentFilters.genderIds?.includes(gender.id)}
               onCheckedChange={(checked) =>
                 updateFilter("gender", gender.id, checked as boolean)
               }

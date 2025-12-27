@@ -79,7 +79,7 @@ export const insertVariantSchema = z.object({
     .partial()
     .optional()
     .nullable(),
-  specs: z.record(z.any()).optional().nullable(),
+  specs: z.record(z.string(), z.any()).optional().nullable(),
   createdAt: z.date().optional(),
   deletedAt: z.date().optional().nullable(),
 });

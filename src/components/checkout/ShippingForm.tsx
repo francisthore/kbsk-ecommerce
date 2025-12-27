@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { createOrder } from "@/lib/actions/order";
-import { createPayfastCheckoutPayload } from "@/lib/actions/payfast";
+import { createPayfastCheckoutPayload, type PayfastPayloadArray } from "@/lib/actions/payfast";
 import { useRouter } from "next/navigation";
 import PayfastRedirectForm from "./PayfastRedirectForm";
 
@@ -21,7 +21,7 @@ export default function ShippingForm({ userEmail, isGuest = false, isSubmitting,
   const router = useRouter();
   const [shippingMethod, setShippingMethod] = useState<"delivery" | "pickup">("delivery");
   const [sameBillingAddress, setSameBillingAddress] = useState(true);
-  const [payfastPayload, setPayfastPayload] = useState<Record<string, unknown> | null>(null);
+  const [payfastPayload, setPayfastPayload] = useState<PayfastPayloadArray | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: userEmail,

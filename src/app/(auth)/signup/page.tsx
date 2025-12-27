@@ -1,5 +1,6 @@
 import { SignupForm } from "@/components/auth";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Create Account | KBSK Trading",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function SignupPage() {
-  return <SignupForm />;
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <SignupForm />
+    </Suspense>
+  );
 }
